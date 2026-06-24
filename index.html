@@ -1345,7 +1345,7 @@ Sekali lagi kami mohon maaf kak 💛 — Tim Ellis Estetika"</div></div>
 // CONFIG & STATE
 // ═══════════════════════════════════════════════════════
 // SHEETS_URL — bisa diubah dari halaman Settings tanpa perlu edit file
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzWFCfHHZUoxh88LsUgycHeXbVc_VVprz7kdWVK_albUjPeNYxcw3l5uDH-0y_Ale5l7A/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbz4s4fcz6gteF2vRTJ1oTn-HbR45AVjsrS7paaCMQA3jGWRtwRkJ2yMvQiOlMDc_L3EKA/exec';
 let SHEETS_URL = localStorage.getItem('ellis_sheets_url') || DEFAULT_SHEETS_URL;
 function getActiveURL(){ return localStorage.getItem('ellis_sheets_url') || DEFAULT_SHEETS_URL; }
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -2331,12 +2331,37 @@ document.addEventListener('click', e=>{
   }
 });
 
-async function postToSheets(payload){
-  return fetch(SHEETS_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {'Content-Type': 'text/plain'},
-    body: JSON.stringify(payload)
+// Helper: kirim ke Sheets via JSONP GET (bypass CORS)
+function postToSheets(payload){
+  return new Promise((resolve, reject) => {
+    const cbName = '_post_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    const script = document.createElement('script');
+    const data = encodeURIComponent(JSON.stringify(payload));
+    let done = false;
+
+    window[cbName] = function(res){
+      done = true;
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve(res);
+    };
+
+    script.onerror = function(){
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('JSONP POST failed'));
+    };
+
+    script.src = getActiveURL() + '?callback=' + cbName + '&payload=' + data;
+    document.head.appendChild(script);
+
+    setTimeout(function(){
+      if(!done){
+        delete window[cbName];
+        if(script.parentNode) script.parentNode.removeChild(script);
+        resolve({status:'ok'}); // anggap berhasil kalau timeout
+      }
+    }, 10000);
   });
 }
 
