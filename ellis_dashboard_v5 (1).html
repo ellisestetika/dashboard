@@ -1,0 +1,3151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ellis Estetika — Dashboard V5.1 JSONP</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Italiana&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#D4A017;--gold-d:#B8860B;--gold-l:#F0C84A;--gold-p:#FDF6E3;
+  --dark:#1E1A0F;--brown:#5C4A1E;--gray:#8A7A5A;--gray-l:#F5F0E8;
+  --white:#fff;--cream:#FFFCF5;
+  --green:#27AE60;--red:#E74C3C;--blue:#2980B9;--orange:#E67E22;--purple:#8E44AD;
+  --bronze:#CD7F32;--silver:#A8A9AD;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--dark);font-size:13px}
+
+/* TOPBAR */
+.topbar{background:var(--dark);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:300;gap:8px}
+.tb-brand{font-family:'Italiana',serif;font-size:18px;color:var(--gold);white-space:nowrap;flex-shrink:0}
+.tb-right{display:flex;gap:6px;align-items:center}
+.tb-btn{padding:5px 12px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:none;white-space:nowrap;transition:all .2s}
+.btn-gold{background:var(--gold);color:white}.btn-gold:hover{background:var(--gold-d)}
+.btn-green{background:var(--green);color:white}
+.btn-blue{background:var(--blue);color:white}
+.btn-red{background:var(--red);color:white}
+.btn-outline{background:transparent;color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2)}.btn-outline:hover{color:white}
+.sync-info{font-size:10px;color:rgba(255,255,255,.4);white-space:nowrap}
+/* Undo/Redo buttons */
+.undo-btns{display:flex;gap:3px}
+.undo-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:4px 8px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s}
+.undo-btn:hover:not(:disabled){background:rgba(255,255,255,.2);color:white}
+.undo-btn:disabled{opacity:.3;cursor:default}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 52px)}
+.sidebar{width:195px;background:var(--dark);padding:10px 0;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;flex-shrink:0}
+.sb-sec{padding:7px 12px 2px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-top:6px}
+.sb-link{display:flex;align-items:center;gap:7px;padding:7px 12px;color:rgba(255,255,255,.55);font-size:11px;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.sb-link:hover{color:white;background:rgba(255,255,255,.05);border-left-color:rgba(212,160,23,.5)}
+.sb-link.active{color:var(--gold);background:rgba(212,160,23,.1);border-left-color:var(--gold)}
+.sb-badge{margin-left:auto;background:var(--red);color:white;font-size:9px;padding:1px 5px;border-radius:5px;font-weight:700}
+
+/* MAIN */
+.main{flex:1;padding:18px;overflow-x:hidden;min-width:0}
+.section{display:none}.section.active{display:block}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid var(--gold-p)}
+.sec-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sec-title{font-family:'Italiana',serif;font-size:22px;color:var(--dark)}
+.sec-desc{font-size:11px;color:var(--gray)}
+.sec-actions{margin-left:auto;display:flex;gap:6px}
+
+/* CARDS */
+.card{background:white;border-radius:12px;border:1px solid rgba(212,160,23,.15);padding:14px;margin-bottom:12px}
+.card-title{font-weight:700;font-size:13px;color:var(--dark);margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-desc{font-size:11px;color:var(--gray);margin-bottom:10px;line-height:1.5}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+/* STATS */
+.stat{background:white;border-radius:10px;padding:12px;border:1px solid rgba(212,160,23,.15);text-align:center}
+.stat-num{font-family:'Italiana',serif;font-size:26px;color:var(--gold-d);line-height:1}
+.stat-label{font-size:10px;color:var(--gray);margin-top:2px}
+.stat-sub{font-size:10px;margin-top:2px;font-weight:600}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer}
+.b-green{background:#E8F8EE;color:#1A7A2E}.b-gold{background:var(--gold-p);color:var(--gold-d)}
+.b-red{background:#FDECEA;color:#C0392B}.b-gray{background:var(--gray-l);color:var(--gray)}
+.b-blue{background:#EBF5FB;color:#1A6FA8}.b-orange{background:#FEF5E7;color:#9B5E0A}
+.b-purple{background:#F5EEF8;color:#6C3483}.b-bronze{background:#FBE9D0;color:#8B4513}
+.b-silver{background:#F0F0F0;color:#555}.b-gold-card{background:#FDF6E3;color:#8B6914}
+
+/* EDITABLE */
+[contenteditable]{outline:none;border-radius:3px;transition:background .15s}
+[contenteditable]:focus{background:var(--gold-p);padding:1px 4px;margin:-1px -4px}
+[contenteditable]:hover:not(:focus){background:rgba(212,160,23,.07);padding:1px 4px;margin:-1px -4px}
+
+/* TODO */
+.todo-list{list-style:none}
+.todo-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--gray-l)}
+.todo-item:last-child{border-bottom:none}
+.chk{width:15px;height:15px;border:2px solid var(--gold);border-radius:3px;cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk.done{background:var(--gold)}.chk.done::after{content:'✓';color:white;font-size:9px;font-weight:700}
+.todo-txt{flex:1;font-size:12px;line-height:1.4}.todo-txt.done{text-decoration:line-through;color:var(--gray)}
+.prio{font-size:9px;font-weight:700;padding:2px 5px;border-radius:5px;white-space:nowrap;flex-shrink:0}
+.p-h{background:#FDECEA;color:#C0392B}.p-m{background:#FEF9E7;color:#B7770D}.p-l{background:#EAF7EA;color:#1E8449}
+.todo-del{background:none;border:none;color:var(--gray);cursor:pointer;font-size:12px;padding:0 2px;flex-shrink:0}
+.todo-del:hover{color:var(--red)}
+.todo-add{display:flex;gap:6px;margin-top:8px}
+.t-inp{flex:1;border:1px solid rgba(212,160,23,.3);border-radius:6px;padding:6px 10px;font-size:12px;font-family:'Outfit',sans-serif;background:var(--gold-p);outline:none}
+.btn-add{background:var(--gold);color:white;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* PROGRESS */
+.prog{margin:5px 0}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--gray);margin-bottom:2px}
+.prog-bar{height:4px;background:var(--gray-l);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold-l),var(--gold));border-radius:2px;transition:width .5s}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{background:var(--dark);color:var(--gold);padding:7px 9px;text-align:left;font-weight:600;font-size:10px;white-space:nowrap;position:sticky;top:0}
+.tbl td{padding:7px 9px;border-bottom:1px solid var(--gray-l);vertical-align:middle}
+.tbl tr:hover td{background:var(--gold-p)}
+.tbl td[contenteditable]{min-width:50px}
+.add-row-btn{margin-top:7px;background:transparent;border:1px dashed var(--gold);color:var(--gold-d);padding:5px 12px;border-radius:7px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;transition:all .2s;width:100%}
+.add-row-btn:hover{background:var(--gold-p)}
+.tbl-wrap{overflow-x:auto;max-height:400px;overflow-y:auto}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-nav-btn{background:var(--gold-p);border:1px solid rgba(212,160,23,.3);color:var(--gold-d);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:'Outfit',sans-serif}
+.cal-month-lbl{font-family:'Italiana',serif;font-size:18px;color:var(--dark)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-hdr{text-align:center;font-size:9px;font-weight:700;color:var(--gray);padding:3px;letter-spacing:.5px}
+.cal-cell{min-height:60px;border-radius:6px;padding:3px;border:1px solid var(--gray-l);background:white;cursor:pointer;transition:all .15s;font-size:10px;position:relative}
+.cal-cell:hover{border-color:var(--gold)}.cal-cell.other{background:var(--gray-l);opacity:.35;cursor:default}
+.cal-cell.today{border-color:var(--gold);border-width:2px}
+.cal-date{font-weight:700;font-size:10px;color:var(--dark);margin-bottom:1px}
+.cal-cell.today .cal-date{color:var(--gold-d)}
+.cal-item{font-size:9px;padding:1px 3px;border-radius:3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}
+.ci-ig{background:#E1306C;color:white}.ci-tt{background:#000;color:white}.ci-th{background:#6C3483;color:white}
+.cal-add-btn{position:absolute;bottom:2px;right:2px;background:var(--gold);color:white;border:none;width:14px;height:14px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+/* Year select */
+.cal-year-sel{font-family:'Outfit',sans-serif;font-size:12px;border:1px solid rgba(212,160,23,.3);border-radius:6px;padding:3px 7px;background:var(--gold-p);color:var(--dark);outline:none;cursor:pointer}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:white;border-radius:14px;padding:18px;width:92%;max-width:540px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:12px;right:12px;background:var(--gray-l);border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.f-label{font-size:10px;font-weight:700;color:var(--gold-d);letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;margin-top:9px;display:block}
+.f-input{width:100%;border:1px solid rgba(212,160,23,.3);border-radius:6px;padding:6px 10px;font-size:12px;font-family:'Outfit',sans-serif;outline:none;background:var(--gold-p)}
+.f-input:focus{border-color:var(--gold)}
+.f-textarea{width:100%;border:1px solid rgba(212,160,23,.3);border-radius:6px;padding:6px 10px;font-size:12px;font-family:'Outfit',sans-serif;outline:none;min-height:65px;resize:vertical;background:var(--gold-p)}
+.f-select{width:100%;border:1px solid rgba(212,160,23,.3);border-radius:6px;padding:6px 10px;font-size:12px;font-family:'Outfit',sans-serif;outline:none;background:var(--gold-p)}
+.modal-actions{display:flex;gap:7px;margin-top:12px;justify-content:flex-end;flex-wrap:wrap}
+.btn-save-m{background:var(--gold);color:white;border:none;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-del-m{background:var(--gray-l);color:var(--gray);border:none;padding:7px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-green-m{background:var(--green);color:white;border:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* LOYALTY STAMP */
+.loyalty-card{border-radius:12px;padding:14px;color:white;margin-bottom:8px}
+.lc-bronze{background:linear-gradient(135deg,#CD7F32,#A0522D)}
+.lc-silver{background:linear-gradient(135deg,#A8A9AD,#6C6C6C)}
+.lc-gold{background:linear-gradient(135deg,#D4A017,#8B6914)}
+.stamps{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
+.stamp{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:10px;background:rgba(255,255,255,.1);cursor:pointer;transition:all .15s}
+.stamp.filled{background:white;color:var(--dark);font-weight:700}
+.stamp.reward-stamp{border-color:#FFD700;border-width:3px}
+.stamp.filled.reward-stamp{background:#FFD700}
+/* Loyalty card number label */
+.lc-card-num{font-size:10px;opacity:.7;margin-top:4px}
+.lc-tier-badge{display:inline-block;background:rgba(255,255,255,.25);padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700;margin-top:4px}
+
+/* TIPS */
+.tips{background:linear-gradient(135deg,var(--gold-p),#FFFDF5);border:1px solid rgba(212,160,23,.3);border-radius:8px;padding:10px 12px;margin:8px 0}
+.tips-t{font-weight:700;font-size:11px;color:var(--gold-d);margin-bottom:3px}
+.tips ul{padding-left:13px;font-size:11px;color:var(--brown);line-height:1.8}
+
+/* ALERT */
+.alert{border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:11px;font-weight:500;line-height:1.5}
+.alert-warning{background:#FEF5E7;border:1px solid #F0C84A;color:#8B6914}
+.alert-success{background:#E8F8EE;border:1px solid var(--green);color:#1A7A2E}
+.alert-red{background:#FDECEA;border:1px solid var(--red);color:#C0392B}
+.alert-blue{background:#EBF5FB;border:1px solid var(--blue);color:#1A6FA8}
+
+/* TEMPLATE */
+.tpl{background:var(--gray-l);border-radius:7px;padding:10px;border-left:3px solid var(--gold);margin-bottom:8px}
+.tpl-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold-d);margin-bottom:4px}
+.tpl-text{font-size:11px;color:var(--dark);line-height:1.6;white-space:pre-line}
+.btn-copy{background:transparent;border:1px solid var(--gold);color:var(--gold-d);padding:3px 9px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;margin-top:5px;font-family:'Outfit',sans-serif}
+.btn-copy:hover{background:var(--gold);color:white}
+.btn-copy.copied{background:var(--green);border-color:var(--green);color:white}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* SRC CHART */
+.src-bar{display:flex;align-items:center;gap:7px;margin:4px 0}
+.src-label{font-size:11px;color:var(--dark);width:130px;flex-shrink:0}
+.src-track{flex:1;height:16px;background:var(--gray-l);border-radius:8px;overflow:hidden}
+.src-fill{height:100%;border-radius:8px;display:flex;align-items:center;padding:0 6px;font-size:9px;color:white;font-weight:700;transition:width .5s;min-width:20px}
+.src-num{font-size:11px;color:var(--gray);width:28px;text-align:right;flex-shrink:0}
+
+/* REVIEW */
+.rv-card{border-radius:8px;padding:10px;margin-bottom:7px}
+.rv-pos{background:#E8F8EE;border-left:3px solid var(--green)}
+.rv-neg{background:#FDECEA;border-left:3px solid var(--red)}
+
+/* LOADING */
+.loading{text-align:center;padding:20px;color:var(--gray);font-size:12px}
+.spinner{width:20px;height:20px;border:3px solid var(--gray-l);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 7px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* KOL CARD */
+.kol-card{border-radius:10px;padding:14px;border:1px solid rgba(212,160,23,.2);background:white;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.kol-card:hover{box-shadow:0 2px 12px rgba(212,160,23,.2);border-color:var(--gold)}
+.kol-stats-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.kol-stat{background:var(--gray-l);border-radius:7px;padding:6px 10px;text-align:center;min-width:60px}
+.kol-stat-num{font-weight:700;font-size:14px;color:var(--gold-d)}
+.kol-stat-lbl{font-size:9px;color:var(--gray)}
+
+/* TOAST */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--dark);color:var(--gold-l);padding:7px 18px;border-radius:16px;font-size:11px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+
+/* SOP */
+.sop-card{background:white;border-radius:10px;border:1px solid rgba(212,160,23,.15);margin-bottom:8px;overflow:hidden}
+.sop-header{padding:10px 14px;background:var(--gold-p);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:12px}
+.sop-body{padding:12px 14px;display:none}
+.sop-body.open{display:block}
+
+/* BANK IDE — cards with date+calendar sync */
+.idea-card{background:white;border-radius:10px;border:1px solid rgba(212,160,23,.15);padding:12px;margin-bottom:8px}
+.idea-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.idea-title{font-weight:700;font-size:12px;flex:1}
+.idea-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.idea-date-wrap{display:flex;align-items:center;gap:5px;margin-top:6px}
+.idea-date-inp{border:1px solid rgba(212,160,23,.3);border-radius:6px;padding:4px 8px;font-size:11px;font-family:'Outfit',sans-serif;background:var(--gold-p);outline:none}
+.idea-sync-btn{background:var(--gold);color:white;border:none;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif}
+.idea-sync-btn:hover{background:var(--gold-d)}
+.idea-del-btn{background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px;padding:0}
+.idea-del-btn:hover{color:var(--red)}
+
+
+
+/* SETTINGS */
+.settings-card{background:white;border-radius:12px;border:1px solid rgba(212,160,23,.15);padding:18px;margin-bottom:14px}
+.settings-title{font-weight:700;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.backup-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:none;transition:all .2s}
+
+/* SOURCE PER YEAR */
+.year-src-wrap{margin-top:8px}
+.year-tab-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.year-tab-btn{padding:4px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;border:1px solid rgba(212,160,23,.3);background:var(--gold-p);color:var(--gold-d);transition:all .15s}
+.year-tab-btn.active{background:var(--gold);color:white;border-color:var(--gold)}
+
+@media(max-width:800px){.sidebar{display:none}.g4,.g3,.g2{grid-template-columns:1fr}.tpl-grid{grid-template-columns:1fr}}
+@media print{.topbar,.sidebar{display:none}.section{display:block!important}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- TOPBAR -->
+<div id="cors-banner" style="display:none;background:#E74C3C;color:white;text-align:center;padding:8px 16px;font-size:11px;font-weight:600">
+  ⚠️ Dibuka via file:// — Load Sheets tidak bisa karena CORS. 
+  <span style="opacity:.8">Solusi: buka Terminal → ketik: </span>
+  <code style="background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px;margin:0 4px">cd Downloads && python3 -m http.server 8080</code>
+  <span style="opacity:.8"> lalu buka </span>
+  <a href="http://localhost:8080" target="_blank" style="color:#FFD700;font-weight:700">http://localhost:8080</a>
+  <button onclick="document.getElementById('cors-banner').style.display='none'" style="background:none;border:none;color:white;cursor:pointer;margin-left:8px;font-size:14px">✕</button>
+</div>
+<div class="topbar">
+  <div class="tb-brand">ellis estetika · v5</div>
+  <div class="tb-right">
+    <span class="sync-info" id="sync-info">Ready</span>
+    <div class="undo-btns">
+      <button class="undo-btn" id="btn-undo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+      <button class="undo-btn" id="btn-redo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+    </div>
+    <button class="tb-btn btn-outline" onclick="syncAll()" title="Load ulang data dari Sheets">🔄 Load</button>
+    <button class="tb-btn" id="btn-sync-sheets" onclick="syncSemuaKeSheets()" title="Simpan semua perubahan ke Google Sheets" style="background:var(--green);color:white">☁️ Sync Sheets</button>
+    <button class="tb-btn btn-blue" onclick="exportXLSX()">📊 Excel</button>
+    <button class="tb-btn btn-gold" onclick="saveAll()">💾 Simpan</button>
+  </div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-sec">Overview</div>
+  <div class="sb-link active" onclick="go('dashboard',this)">📊 Dashboard</div>
+  <div class="sb-sec">Pasien</div>
+  <div class="sb-link" onclick="go('input-pasien',this)">➕ Input Pasien</div>
+  <div class="sb-link" onclick="go('master-pasien',this)">👥 Master Pasien <span class="sb-badge" id="sb-total">369</span></div>
+  <div class="sb-link" onclick="go('followup',this)">📞 Follow Up WA <span class="sb-badge" id="sb-fu">0</span></div>
+  <div class="sb-link" onclick="go('inactive',this)">😴 Inactive <span class="sb-badge" id="sb-inactive">283</span></div>
+  <div class="sb-link" onclick="go('birthday',this)">🎂 Birthday <span class="sb-badge" id="sb-bday">26</span></div>
+  <div class="sb-sec">Loyalty</div>
+  <div class="sb-link" onclick="go('loyalty',this)">💳 Loyalty Card</div>
+  <div class="sb-link" onclick="go('sahabat',this)">👑 Sahabat Ellis</div>
+  <div class="sb-sec">Marketing</div>
+  <div class="sb-link" onclick="go('konten',this)">📅 Kalender Konten</div>
+  <div class="sb-link" onclick="go('instagram',this)">📸 Instagram</div>
+  <div class="sb-link" onclick="go('tiktok',this)">🎵 TikTok</div>
+  <div class="sb-link" onclick="go('threads',this)">🧵 Threads</div>
+  <div class="sb-link" onclick="go('gmaps',this)">🗺️ Google Maps</div>
+  <div class="sb-link" onclick="go('ads',this)">📣 Ads</div>
+  <div class="sb-link" onclick="go('kol',this)">⭐ KOL</div>
+  <div class="sb-sec">Program</div>
+  <div class="sb-link" onclick="go('mgm',this)">👥 Member Get Member</div>
+  <div class="sb-link" onclick="go('promo',this)">🎁 Promo & Event</div>
+  <div class="sb-sec">Offline</div>
+  <div class="sb-link" onclick="go('brosur',this)">📄 Brosur & Spanduk</div>
+  <div class="sb-sec">Operasional</div>
+  <div class="sb-link" onclick="go('sop',this)">📋 SOP CS & WA</div>
+  <div class="sb-link" onclick="go('sumber',this)">📈 Sumber Pasien</div>
+  <div class="sb-link" onclick="go('monthly',this)">📆 Monthly Review</div>
+  <div class="sb-link" onclick="go('settings',this)">⚙️ Settings</div>
+</nav>
+
+<main class="main">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="dashboard" class="section active">
+  <div class="sec-hdr">
+    <div class="sec-icon" style="background:var(--gold-p)">📊</div>
+    <div><div class="sec-title">Dashboard Ellis Estetika</div><div class="sec-desc">Condet, Jakarta Timur · by dr. Ellis ZD · 0821-1382-4318</div></div>
+  </div>
+  <div class="alert alert-red">🎂 <strong id="dash-bday-alert">26 pasien ulang tahun bulan ini</strong> — <a onclick="go('birthday',getSBLink('birthday'))" style="color:var(--red);cursor:pointer;font-weight:700;text-decoration:underline">Lihat & follow up →</a></div>
+  <div class="g4" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" contenteditable>2.115</div><div class="stat-label">IG Followers</div><div class="stat-sub" style="color:var(--green)" contenteditable>Target: 5.000</div></div>
+    <div class="stat"><div class="stat-num" contenteditable>117</div><div class="stat-label">TikTok Followers</div><div class="stat-sub" style="color:var(--green)" contenteditable>Target: 1.000</div></div>
+    <div class="stat"><div class="stat-num" contenteditable>157</div><div class="stat-label">Google Reviews ⭐5.0</div><div class="stat-sub" style="color:var(--gold-d)" contenteditable>Target: 200</div></div>
+    <div class="stat"><div class="stat-num" contenteditable>0–2</div><div class="stat-label">Pasien/Hari</div><div class="stat-sub" style="color:var(--red)" contenteditable>Target: 8–10</div></div>
+  </div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" style="color:var(--bronze)" id="d-bronze">47</div><div class="stat-label">Bronze Card</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--silver)" id="d-silver">8</div><div class="stat-label">Silver Card</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--gold-d)" id="d-gold-lbl">9</div><div class="stat-label">Gold Card</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">🚦 Progress Marketing</div>
+      <div class="prog"><div class="prog-lbl"><span contenteditable>Instagram Profile</span><span contenteditable>80%</span></div><div class="prog-bar"><div class="prog-fill" style="width:80%"></div></div></div>
+      <div class="prog"><div class="prog-lbl"><span contenteditable>TikTok Setup</span><span contenteditable>20%</span></div><div class="prog-bar"><div class="prog-fill" style="width:20%"></div></div></div>
+      <div class="prog"><div class="prog-lbl"><span contenteditable>Google Maps</span><span contenteditable>90%</span></div><div class="prog-bar"><div class="prog-fill" style="width:90%"></div></div></div>
+      <div class="prog"><div class="prog-lbl"><span contenteditable>Konten Konsisten</span><span contenteditable>15%</span></div><div class="prog-bar"><div class="prog-fill" style="width:15%"></div></div></div>
+      <div class="prog"><div class="prog-lbl"><span contenteditable>Loyalty Program</span><span contenteditable>60%</span></div><div class="prog-bar"><div class="prog-fill" style="width:60%"></div></div></div>
+      <div class="prog"><div class="prog-lbl"><span contenteditable>Follow Up Sistem</span><span contenteditable>10%</span></div><div class="prog-bar"><div class="prog-fill" style="width:10%"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ To-Do Minggu Ini
+        <button onclick="addTodo('main-todo','main-inp')" style="margin-left:auto;background:var(--gold);color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+</button>
+      </div>
+      <ul class="todo-list" id="main-todo">
+        <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Update bio Instagram + pasang Linktree</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+        <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Isi bio TikTok — sekarang masih kosong!</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+        <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Follow up 26 pasien birthday bulan ini</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+        <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Buat 1 video skit TikTok minggu ini</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+        <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>WA blast MGM ke pasien aktif</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      </ul>
+      <div class="todo-add">
+        <input class="t-inp" id="main-inp" placeholder="Tambah to-do..." onkeydown="if(event.key==='Enter')addTodo('main-todo','main-inp')">
+        <button class="btn-add" onclick="addTodo('main-todo','main-inp')">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔗 Quick Links</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      <a href="https://docs.google.com/spreadsheets/d/1yQlH_SsKx9xLDkDCcbbPQSZ1pIUOA8G0F4eDHhtUJ74" target="_blank" class="tb-btn btn-green" style="text-decoration:none;font-size:11px">📊 Google Sheets</a>
+      <a href="https://www.instagram.com/ellisestetikajakarta" target="_blank" class="tb-btn" style="background:#E1306C;color:white;text-decoration:none;font-size:11px">📸 Instagram</a>
+      <a href="https://www.tiktok.com/@ellisestetikajaka" target="_blank" class="tb-btn" style="background:#000;color:white;text-decoration:none;font-size:11px">🎵 TikTok</a>
+      <a href="https://wa.me/6282113824318" target="_blank" class="tb-btn" style="background:#25D366;color:white;text-decoration:none;font-size:11px">💬 WA Klinik</a>
+      <a href="https://maps.google.com/?q=Ellis+Estetika+Jakarta+Condet" target="_blank" class="tb-btn btn-blue" style="text-decoration:none;font-size:11px">🗺️ Google Maps</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INPUT PASIEN ═══ -->
+<div id="input-pasien" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#E8F8EE">➕</div><div><div class="sec-title">Input Pasien Hari Ini</div><div class="sec-desc">Catat pasien baru & kunjungan — sync ke Google Sheets</div></div></div>
+  <div class="card">
+    <div class="card-title">📋 Form Pasien</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+      <div><label class="f-label">Tanggal *</label><input class="f-input" id="pt-tgl" type="date"></div>
+      <div><label class="f-label">No. Member</label><input class="f-input" id="pt-member" placeholder="00D40000 / BARU"></div>
+      <div><label class="f-label">Nama Pasien *</label><input class="f-input" id="pt-nama" placeholder="Nama lengkap"></div>
+      <div><label class="f-label">No. HP / WA</label><input class="f-input" id="pt-hp" placeholder="08xx"></div>
+      <div><label class="f-label">Tgl Lahir</label><input class="f-input" id="pt-lahir" type="date"></div>
+      <div><label class="f-label">Sumber *</label>
+        <select class="f-select" id="pt-sumber">
+          <option value="">-- Pilih --</option>
+          <option>Instagram</option><option>TikTok</option><option>Threads</option>
+          <option>Google Maps</option><option>Referral Teman</option><option>WhatsApp</option>
+          <option>Walk-in</option><option>KOL/Influencer</option><option>Brosur</option>
+          <option>Spanduk/Billboard</option><option>Ads Berbayar</option>
+        </select>
+      </div>
+      <div><label class="f-label">Treatment *</label><input class="f-input" id="pt-treatment" placeholder="Facial, Skinbooster, dst"></div>
+      <div><label class="f-label">Total Spend (Rp)</label><input class="f-input" id="pt-spend" type="number" placeholder="0"></div>
+      <div><label class="f-label">Masalah Kulit</label><input class="f-input" id="pt-masalah" placeholder="Jerawat, kusam, dll"></div>
+      <div><label class="f-label">Loyalty Tier</label>
+        <select class="f-select" id="pt-loyalty"><option value="">-- Pilih --</option><option>Bronze</option><option>Silver</option><option>Gold</option></select>
+      </div>
+      <div><label class="f-label">Follow Up</label>
+        <select class="f-select" id="pt-fu-type">
+          <option value="standard">Standard (H+3 & H+21)</option>
+          <option value="biweekly">Bi-weekly (tiap 2 minggu)</option>
+          <option value="monthly">Bulanan</option>
+          <option value="none">Tidak perlu</option>
+        </select>
+      </div>
+      <div><label class="f-label">Dibawa oleh (MGM)</label><input class="f-input" id="pt-mgm" placeholder="Nama pasien yg mereferral"></div>
+    </div>
+    <div style="margin-top:8px"><label class="f-label">Catatan</label><textarea class="f-textarea" id="pt-notes" placeholder="Catatan tambahan..."></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button onclick="submitPatient()" class="tb-btn btn-gold" style="font-size:13px;padding:8px 20px">💾 Simpan & Sync Sheets</button>
+      <button onclick="resetForm()" class="tb-btn btn-outline" style="color:var(--gray);border-color:var(--gray-l)">🔄 Reset Form</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Pasien Hari Ini <span id="today-count" style="font-family:'Italiana',serif;font-size:20px;color:var(--gold-d);margin-left:6px">0</span>
+      <button onclick="exportTodayXLSX()" class="tb-btn btn-blue" style="margin-left:auto;font-size:10px">📊 Export Hari Ini</button>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Waktu</th><th>Nama</th><th>HP</th><th>Sumber</th><th>Treatment</th><th>Spend</th><th>Loyalty</th><th>FU</th><th>Del</th></tr></thead>
+      <tbody id="today-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ MASTER PASIEN ═══ -->
+<div id="master-pasien" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#EBF5FB">👥</div><div><div class="sec-title">Master Data Pasien</div><div class="sec-desc">Sumber: Google Sheets</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="syncMaster()">🔄 Load Sheets</button><button class="tb-btn btn-green" onclick="saveMasterEditsToSheets()">☁️ Simpan Catatan</button><button class="tb-btn btn-outline" onclick="testKoneksiSheets()" style="color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);font-size:10px">🔌 Test Koneksi</button></div>
+  </div>
+  <div class="g4" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" id="mp-total">369</div><div class="stat-label">Total Pasien</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--green)" id="mp-active">-</div><div class="stat-label">Aktif (30 hr)</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--red)" id="mp-inactive">283</div><div class="stat-label">Inactive 90+hr</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--blue)" id="mp-new">-</div><div class="stat-label">Baru Bulan Ini</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔍 Filter & Cari</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <input id="srch-pasien" class="f-input" style="max-width:180px" placeholder="🔍 Cari nama...">
+      <select id="fltr-loyalty" class="f-select" style="max-width:140px" onchange="renderMasterTable()"><option value="">Semua Loyalty</option><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option></select>
+      <select id="fltr-sumber" class="f-select" style="max-width:150px" onchange="renderMasterTable()"><option value="">Semua Sumber</option><option>Instagram</option><option>TikTok</option><option>Google Maps</option><option>Referral Teman</option><option>Walk-in</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <div id="master-loading" class="loading" style="display:none"><div class="spinner"></div>Loading dari Google Sheets...</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>No Member</th><th>Nama</th><th>HP</th><th>Tgl Lahir</th><th>Sumber</th><th>Masalah</th><th>Terakhir Datang</th><th>Visit</th><th>Loyalty</th><th>Stamp</th><th>FU H+3 & H+21</th><th>WA Grup</th><th>Notes</th></tr></thead>
+      <tbody id="master-tbody"><tr><td colspan="13" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets" untuk tampilkan data</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ FOLLOW UP ═══ -->
+<div id="followup" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#E8F8EE">📞</div><div><div class="sec-title">Follow Up WhatsApp</div><div class="sec-desc">H+3 & H+21 setelah treatment</div></div>
+    <div class="sec-actions">
+      <button class="tb-btn btn-gold" onclick="syncFU()">🔄 Load Sheets</button>
+      <button class="tb-btn btn-green" onclick="saveFUStatusToSheets()">☁️ Simpan Status FU</button>
+      <button class="tb-btn btn-blue" onclick="addFURow()">+ Manual</button>
+    </div>
+  </div>
+  <div class="g4" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" id="fu-total" style="color:var(--gold-d)">0</div><div class="stat-label">Total FU</div></div>
+    <div class="stat"><div class="stat-num" id="fu-done" style="color:var(--green)">0</div><div class="stat-label">Sudah Di-FU</div></div>
+    <div class="stat"><div class="stat-num" id="fu-pending" style="color:var(--red)">0</div><div class="stat-label">Belum Di-FU</div></div>
+    <div class="stat"><div class="stat-num" id="fu-balik" style="color:var(--blue)">0</div><div class="stat-label">Kembali Datang</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+      <select id="fu-filter" class="f-select" style="max-width:160px" onchange="filterFU()">
+        <option value="all">Semua</option>
+        <option value="h3">H+3 Jatuh Tempo</option>
+        <option value="h21">H+21 Jatuh Tempo</option>
+        <option value="pending">Belum Di-FU</option>
+        <option value="done">Sudah Di-FU</option>
+      </select>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Nama</th><th>HP</th><th>Treatment Terakhir</th><th>Tgl Kunjungan</th><th>FU H+3</th><th>Status H+3</th><th>FU H+21</th><th>Status H+21</th><th>WA</th></tr></thead>
+      <tbody id="fu-tbody"><tr><td colspan="10" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets"</td></tr></tbody>
+    </table></div>
+  </div>
+  <div class="tips"><div class="tips-t">💬 Template WA Follow Up</div>
+    <div class="tpl"><div class="tpl-label">H+3</div><div class="tpl-text" contenteditable>"Halo kak [NAMA]! 🌿 Gimana kondisi kulitnya setelah treatment kemarin? Ada yang mau ditanyain? Kami siap bantu ya 💛 — Ellis Estetika, Condet"</div><button class="btn-copy" onclick="copyTpl(this)">📋 Copy</button></div>
+    <div class="tpl"><div class="tpl-label">H+21</div><div class="tpl-text" contenteditable>"Halo kak [NAMA]! ✨ Sudah 3 minggu nih sejak treatment, kulitnya sudah terasa bedanya? Saatnya treatment lagi kak supaya hasilnya makin optimal! Mau kami bantu booking? 💛 — Ellis Estetika"</div><button class="btn-copy" onclick="copyTpl(this)">📋 Copy</button></div>
+  </div>
+</div>
+
+<!-- ═══ INACTIVE ═══ -->
+<div id="inactive" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#FDECEA">😴</div><div><div class="sec-title">Pasien Inactive</div><div class="sec-desc">Tidak datang 30/60/90+ hari</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="syncInactive()">🔄 Load Sheets</button></div>
+  </div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" style="color:var(--orange)" id="in-30">4</div><div class="stat-label">30–59 hari</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--red)" id="in-60">32</div><div class="stat-label">60–89 hari</div></div>
+    <div class="stat"><div class="stat-num" style="color:#8B0000" id="in-90">283</div><div class="stat-label">90+ hari</div></div>
+  </div>
+  <div class="tips"><div class="tips-t">💬 Script WA Inactive</div><div class="tpl-text" contenteditable style="font-size:11px">"Halo kak [nama] 😊 Sudah lama nih kami kangen kak [nama] di Ellis Estetika! Kulit kak pasti kangen perawatan juga 🌿 Kami ada promo spesial bulan ini, mau kami info-kan? 💛"</div></div>
+  <div class="card">
+    <div class="card-title">Filter:
+      <select id="inactive-filter" class="f-select" style="width:auto;font-size:10px;margin-left:8px" onchange="filterInactive()">
+        <option value="all">Semua</option><option value="30">30–59 hr</option><option value="60">60–89 hr</option><option value="90">90+ hr</option>
+      </select>
+    </div>
+    <div id="inactive-loading" class="loading" style="display:none"><div class="spinner"></div>Loading...</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Nama</th><th>HP</th><th>Terakhir Datang</th><th>Hari Inactive</th><th>Treatment Terakhir</th><th>Status FU</th><th>Tgl FU Terakhir</th><th>Balik?</th><th>WA</th></tr></thead>
+      <tbody id="inactive-tbody"><tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets"</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ BIRTHDAY ═══ -->
+<div id="birthday" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#FDE8F0">🎂</div><div><div class="sec-title">Birthday Promo</div><div class="sec-desc">Pasien ulang tahun bulan ini</div></div>
+    <div class="sec-actions">
+      <select id="bday-month-sel" class="f-select" style="max-width:130px;font-size:11px" onchange="filterBirthday()">
+        <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option><option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option><option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option><option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
+      </select>
+      <button class="tb-btn btn-gold" onclick="syncBirthday()">🔄 Load</button>
+    </div>
+  </div>
+  <div class="g4" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" style="color:var(--gold-d)" id="bd-total">0</div><div class="stat-label">Total Birthday</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--red)" id="bd-today">0</div><div class="stat-label">Hari Ini</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--orange)" id="bd-fu">0</div><div class="stat-label">Sudah Di-FU</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--green)" id="bd-datang">0</div><div class="stat-label">Datang Ambil Promo</div></div>
+  </div>
+  <div class="alert alert-red" id="bday-today-alert" style="display:none">🎂 Ada pasien ulang tahun <strong>HARI INI!</strong> — jangan lupa kirim ucapan.</div>
+  <div class="tips"><div class="tips-t">💬 Script WA Birthday</div><div class="tpl-text" contenteditable style="font-size:11px">"Selamat Ulang Tahun kak [NAMA]! 🎂🎉 Semoga selalu sehat & cantik ya! Sebagai hadiah spesial dari Ellis Estetika, kak dapat [REWARD SPESIAL] berlaku sampai akhir bulan ini. Mau kami bantu booking? 💛 — Ellis Estetika"</div></div>
+  <div class="card">
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Tgl Lahir</th><th>Nama</th><th>HP</th><th>Loyalty</th><th>Reward Diberikan</th><th>FU Terkirim</th><th>Tgl FU</th><th>Datang?</th><th>WA</th></tr></thead>
+      <tbody id="bday-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ LOYALTY ═══ -->
+<div id="loyalty" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:var(--gold-p)">💳</div><div><div class="sec-title">Loyalty Card</div><div class="sec-desc">Bronze · Silver · Gold — 10 stempel, reward di stempel ke-4 & ke-10</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="syncLoyalty()">🔄 Load Sheets</button><button class="tb-btn btn-green" onclick="saveAllLoyaltyToSheets()">☁️ Simpan ke Sheets</button></div>
+  </div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="loyalty-card lc-bronze">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.8">BRONZE CARD · min Rp 300rb</div>
+        <span class="lc-tier-badge">BRONZE</span>
+      </div>
+      <div class="stamps" id="demo-bronze"></div>
+      <div style="font-size:11px;opacity:.8">🎁 Reward di stempel ke-<strong>4</strong> &amp; ke-<strong>10</strong></div>
+      <div class="lc-card-num" style="margin-top:6px">Total member: <strong><span id="ct-bronze">47</span></strong></div>
+    </div>
+    <div class="loyalty-card lc-silver">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.8">SILVER CARD · min Rp 1,5jt</div>
+        <span class="lc-tier-badge">SILVER</span>
+      </div>
+      <div class="stamps" id="demo-silver"></div>
+      <div style="font-size:11px;opacity:.8">🎁 Reward di stempel ke-<strong>4</strong> &amp; ke-<strong>10</strong></div>
+      <div class="lc-card-num" style="margin-top:6px">Total member: <strong><span id="ct-silver">8</span></strong></div>
+    </div>
+    <div class="loyalty-card lc-gold">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.8">GOLD CARD · min Rp 2jt</div>
+        <span class="lc-tier-badge">GOLD</span>
+      </div>
+      <div class="stamps" id="demo-gold"></div>
+      <div style="font-size:11px;opacity:.8">🎁 Reward di stempel ke-<strong>4</strong> &amp; ke-<strong>10</strong></div>
+      <div class="lc-card-num" style="margin-top:6px">Total member: <strong><span id="ct-gold">9</span></strong></div>
+    </div>
+  </div>
+  <div class="alert alert-blue">💡 <strong>Aturan Loyalty:</strong> 10 stempel = 1 kartu penuh. Reward diberikan di stempel ke-<strong>4</strong> dan ke-<strong>10</strong>. Setelah kartu ke-10 penuh → klaim reward → kartu baru dimulai (kartu ke-2, ke-3, dst). Kolom <em>"Kartu ke-"</em> menunjukkan sudah berapa kartu yang diselesaikan pasien itu.</div>
+  <div class="card">
+    <div class="card-title">💳 Tracker Member Loyalty</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <input id="srch-loyalty" class="f-input" style="max-width:170px" placeholder="🔍 Cari member...">
+      <select id="fltr-tier" class="f-select" style="max-width:130px"><option value="">Semua Tier</option><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option></select>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>No Member</th><th>Nama</th><th>HP</th><th>Tier</th><th>Stempel</th><th>Kartu ke-</th><th>Progress Stempel</th><th>Klaim ke-4</th><th>Klaim ke-10</th><th>Aksi</th></tr></thead>
+      <tbody id="loyalty-tbody"><tr><td colspan="10" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets"</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ SAHABAT ELLIS ═══ -->
+<div id="sahabat" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:var(--gold-p)">👑</div><div><div class="sec-title">Sahabat Ellis</div><div class="sec-desc">Grup WA eksklusif — pasien loyal</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="syncSahabat()">🔄 Load Sheets</button><button class="tb-btn btn-green" onclick="openAddSahabat()">+ Tambah Member</button></div>
+  </div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" style="color:var(--bronze)" id="sb-bronze-ct">47</div><div class="stat-label">Bronze Member</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--silver)" id="sb-silver-ct">8</div><div class="stat-label">Silver Member</div></div>
+    <div class="stat"><div class="stat-num" style="color:var(--gold-d)" id="sb-gold-ct">9</div><div class="stat-label">Gold Member</div></div>
+  </div>
+  <div class="tips"><div class="tips-t">💬 Script Undang Grup WA Sahabat Ellis</div><div class="tpl-text" contenteditable style="font-size:11px">"Halo kak [NAMA]! 👑 Selamat! Kakak terpilih untuk bergabung di Grup Eksklusif Sahabat Ellis Estetika! Di grup ini kak akan mendapatkan: info promo lebih awal, tips skincare eksklusif dari dr. Ellis, priority booking, & flash sale member only. Link grup: [LINK WA GRUP] 💛"</div></div>
+  <div class="card">
+    <div class="card-title">👑 Daftar Member Sahabat Ellis</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Nama</th><th>HP</th><th>Tier</th><th>Total Visit</th><th>Status Grup</th><th>Tgl Diundang</th><th>Aksi</th></tr></thead>
+      <tbody id="sahabat-tbody"><tr><td colspan="7" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets"</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ KALENDER KONTEN ═══ -->
+<div id="konten" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#FDE8F0">📅</div><div><div class="sec-title">Kalender Konten</div><div class="sec-desc">Instagram · TikTok · Threads — multi-konten per hari</div></div></div>
+  <div class="card">
+    <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:600">Filter:</span>
+      <label style="font-size:11px"><input type="checkbox" id="show-ig" checked onchange="renderCal()"> <span style="color:#E1306C">📸 IG</span></label>
+      <label style="font-size:11px"><input type="checkbox" id="show-tt" checked onchange="renderCal()"> <span>🎵 TT</span></label>
+      <label style="font-size:11px"><input type="checkbox" id="show-th" checked onchange="renderCal()"> <span style="color:var(--purple)">🧵 TH</span></label>
+      <select id="cal-year-select" class="cal-year-sel" onchange="calYear=parseInt(this.value);renderCal()"></select>
+      <button onclick="openAddContent()" style="margin-left:auto;background:var(--gold);color:white;border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">+ Tambah Konten</button>
+    </div>
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="changeMonth(-1)">‹ Prev</button>
+      <div class="cal-month-lbl" id="cal-title"></div>
+      <button class="cal-nav-btn" onclick="changeMonth(1)">Next ›</button>
+    </div>
+    <div class="cal-grid" id="cal-hdr">
+      <div class="cal-hdr">SEN</div><div class="cal-hdr">SEL</div><div class="cal-hdr">RAB</div><div class="cal-hdr">KAM</div><div class="cal-hdr">JUM</div><div class="cal-hdr">SAB</div><div class="cal-hdr">MIN</div>
+    </div>
+    <div class="cal-grid" id="cal-body" style="margin-top:2px"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Semua Konten Terjadwal</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Tanggal</th><th>Platform</th><th>Tipe</th><th>Judul</th><th>Hook</th><th>Status</th><th>Views/Likes</th><th>Aksi</th></tr></thead>
+      <tbody id="konten-list-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ INSTAGRAM ═══ -->
+<div id="instagram" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#FDE8F0">📸</div><div><div class="sec-title">Instagram</div><div class="sec-desc">@ellisestetikajakarta</div></div></div>
+  <div class="card">
+    <div class="card-title">✅ Setup Checklist
+      <button onclick="addTodo('ig-todo','ig-inp')" style="margin-left:auto;background:#E1306C;color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Tambah</button>
+    </div>
+    <ul class="todo-list" id="ig-todo">
+      <li class="todo-item"><div class="chk done" onclick="toggleChk(this)"></div><div class="todo-txt done">Name: Ellis Estetika | Facial Specialist Condet</div><span class="badge b-green">✓</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Update bio & pasang Linktree di bio</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Ganti cover 10 highlight (file sudah siap)</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Upload 5 slide INFO KLINIK ke Highlight</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Posting minimal 5x per minggu (target)</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+    </ul>
+    <div class="todo-add"><input class="t-inp" id="ig-inp" placeholder="Tambah checklist..." onkeydown="if(event.key==='Enter')addTodo('ig-todo','ig-inp')"><button class="btn-add" onclick="addTodo('ig-todo','ig-inp')">+</button></div>
+  </div>
+  <!-- Bank Ide Instagram -->
+  <div class="card">
+    <div class="card-title">💡 Bank Ide Instagram
+      <button onclick="addIgIdea()" style="margin-left:auto;background:#E1306C;color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Ide</button>
+    </div>
+    <div id="ig-ideas-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">✍️ Template Caption</div>
+    <div class="tpl-grid">
+      <div class="tpl"><div class="tpl-label">🎭 Skit</div><div class="tpl-text" contenteditable>[Hook kuat — situasi relatable di 3 detik pertama]
+
+[Isi skit 15–30 detik]
+
+Kulit sehat bukan kemewahan, itu kebutuhan ✨
+
+📍 Ellis Estetika | Condet, Jaktim
+📞 0821-1382-4318 | 👇 Link di bio
+
+#ellisestetika #klinikkecantikan #condet #jakartimur #facialjakarta #beautyclinic</div><button class="btn-copy" onclick="copyTpl(this)">📋 Copy</button></div>
+      <div class="tpl"><div class="tpl-label">📚 Edukasi</div><div class="tpl-text" contenteditable>[Judul menarik — angka atau pertanyaan]
+.
+✨ [Poin 1]
+💉 [Poin 2]  
+🌿 [Poin 3]
+⚡ [Poin 4]
+.
+Mau tahu lebih? Konsultasi GRATIS yuk! 👇
+📞 0821-1382-4318
+#skincare #edukasikulit #ellisestetika</div><button class="btn-copy" onclick="copyTpl(this)">📋 Copy</button></div>
+      <div class="tpl"><div class="tpl-label">✨ Before-After</div><div class="tpl-text" contenteditable>Hasil nyata pasien Ellis Estetika ✨
+
+Treatment: [nama treatment]
+Masalah awal: [deskripsi]
+Hasil: [perubahan terlihat]
+Sesi: [berapa kali]
+
+*Hasil bervariasi tiap individu
+
+Mau kulit seperti ini? Konsultasi gratis dulu! 👇
+📞 0821-1382-4318
+#beforeafter #hasilnyata #ellisestetika</div><button class="btn-copy" onclick="copyTpl(this)">📋 Copy</button></div>
+      <div class="tpl"><div class="tpl-label">⭐ Testimoni</div><div class="tpl-text" contenteditable>"[Kutipan testimoni pasien]"
+— [Inisial], [usia opsional]
+
+Treatment: [nama] | 📍 Condet, Jaktim
+Terima kasih sudah percaya kulit-mu di sini 🙏✨
+
+Mau merasakan hasilnya juga? 
+📞 0821-1382-4318 | 👇 Link di bio
+#testimoni #ellisestetika #klinikkecantikan</div><button class="btn-copy" onclick="copyTpl(this)">📋 Copy</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">#️⃣ Hashtag Bank</div>
+    <div contenteditable style="font-size:11px;color:var(--brown);line-height:2;word-break:break-word">#ellisestetika #ellisestetikajakarta #klinikkecantikan #klinikestetika #facialjakarta #facialcondet #skinbooster #dermapen4 #rfmicroneedle #perawatanwajah #kulitsehat #glowingskin #kecantikan #jakartimur #condet #kramatjati #beautyclinic #skincare #wajahsehataurabersinar</div>
+  </div>
+</div>
+
+<!-- ═══ TIKTOK ═══ -->
+<div id="tiktok" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#F0F0F0">🎵</div><div><div class="sec-title">TikTok</div><div class="sec-desc">@ellisestetikajaka · target 1x/hari</div></div></div>
+  <div class="card">
+    <div class="card-title">✅ Setup Checklist
+      <button onclick="addTodo('tt-todo','tt-inp')" style="margin-left:auto;background:#000;color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Tambah</button>
+    </div>
+    <ul class="todo-list" id="tt-todo">
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Isi bio TikTok — sekarang KOSONG!</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Tambah link WA di bio</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Posting rutin minimal 1x/hari</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+    </ul>
+    <div class="todo-add"><input class="t-inp" id="tt-inp" placeholder="Tambah checklist..." onkeydown="if(event.key==='Enter')addTodo('tt-todo','tt-inp')"><button class="btn-add" onclick="addTodo('tt-todo','tt-inp')">+</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🎬 Bank Ide Skenario TikTok
+      <button onclick="addTTIdea()" style="margin-left:auto;background:#000;color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Ide</button>
+    </div>
+    <div id="tt-ideas-list"></div>
+  </div>
+  <div class="tips"><div class="tips-t">⚡ Aturan Wajib TikTok</div><ul>
+    <li>Hook 3 detik pertama — JANGAN mulai "Halo semuanya..."</li>
+    <li>Durasi ideal: 15–30 detik skit, 45–60 detik edukasi</li>
+    <li>Posting jam 18.00–21.00 WIB untuk reach maksimal</li>
+    <li>Balas semua komentar dalam 1 jam pertama</li>
+    <li>Skit & roleplay = views tertinggi berdasarkan data akun kamu</li>
+  </ul></div>
+</div>
+
+<!-- ═══ THREADS ═══ -->
+<div id="threads" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#F0F0F0">🧵</div><div><div class="sec-title">Threads</div><div class="sec-desc">Reach organik tinggi — 3x/minggu</div></div></div>
+  <div class="card">
+    <div class="card-title">✅ Setup Checklist
+      <button onclick="addTodo('th-todo','th-inp')" style="margin-left:auto;background:var(--purple);color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Tambah</button>
+    </div>
+    <ul class="todo-list" id="th-todo">
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Buat akun @ellisestetikajakarta di Threads</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Sambungkan dengan Instagram (otomatis)</div><span class="prio p-h">🔴</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Post pertama: perkenalan klinik</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+    </ul>
+    <div class="todo-add"><input class="t-inp" id="th-inp" placeholder="Tambah checklist..." onkeydown="if(event.key==='Enter')addTodo('th-todo','th-inp')"><button class="btn-add" onclick="addTodo('th-todo','th-inp')">+</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">💬 Bank Ide Post Threads
+      <button onclick="addThIdea()" style="margin-left:auto;background:var(--purple);color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Ide</button>
+    </div>
+    <div id="th-ideas-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">💬 Tracker Komentar
+      <button onclick="addThComment()" style="margin-left:auto;background:var(--purple);color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer">+ Tambah</button>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Post</th><th>Komentar dari</th><th>Isi Komentar</th><th>Sudah Dibalas?</th><th>Tgl Balas</th></tr></thead>
+      <tbody id="th-comments-body">
+        <tr><td contenteditable>Post tips skincare</td><td contenteditable>@user123</td><td contenteditable>"Kak, bisa konsultasi online ga?"</td><td><span class="badge b-red" onclick="toggleReply(this)">Belum</span></td><td contenteditable>-</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ GOOGLE MAPS ═══ -->
+<div id="gmaps" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#EBF5FB">🗺️</div><div><div class="sec-title">Google Maps & Reviews</div><div class="sec-desc">Rating 5.0 · 157 Reviews</div></div></div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" contenteditable>157</div><div class="stat-label">Total Reviews</div></div>
+    <div class="stat"><div class="stat-num" contenteditable>5.0</div><div class="stat-label">Rating ⭐</div></div>
+    <div class="stat"><div class="stat-num" contenteditable style="color:var(--red)">0</div><div class="stat-label">Belum Dibalas</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🔗 Link Google Review</div>
+    <div class="alert alert-blue">💡 Update link Google Review di bawah ini. Cara dapat link: Buka Google Maps → cari "Ellis Estetika Jakarta" → klik "Tulis Ulasan" → copy URL.</div>
+    <label class="f-label">Link Google Review Ellis Estetika Jakarta</label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input class="f-input" id="gmaps-link-input" placeholder="https://g.page/r/xxx/review" style="flex:1">
+      <a id="gmaps-review-link" href="#" target="_blank" class="tb-btn btn-blue" style="text-decoration:none;white-space:nowrap">⭐ Buka</a>
+    </div>
+    <script>document.getElementById('gmaps-link-input')?.addEventListener('input',function(){document.getElementById('gmaps-review-link').href=this.value||'#'});</script>
+  </div>
+  <div class="card">
+    <div class="card-title">⭐ Tracker Review Manual
+      <button onclick="addReview()" style="margin-left:auto;background:var(--gold);color:white;border:none;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer">+ Tambah Review</button>
+    </div>
+    <div id="review-list">
+      <div class="rv-card rv-pos"><div style="font-weight:700;font-size:12px" contenteditable>⭐⭐⭐⭐⭐ — Pasien A</div><div style="font-size:11px;color:var(--brown);margin:4px 0;line-height:1.5" contenteditable>Pelayanan ramah, dokternya profesional!</div><div style="font-size:10px;color:var(--gray)" contenteditable>Juni 2025</div><div style="font-size:11px;color:var(--green);font-weight:600;margin-top:4px;cursor:pointer" onclick="toggleReply(this)">✓ Sudah dibalas</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">✅ Optimasi Google Maps</div>
+    <ul class="todo-list" id="gmaps-todo">
+      <li class="todo-item"><div class="chk done" onclick="toggleChk(this)"></div><div class="todo-txt done">Rating 5.0 & 157 reviews — sudah bagus!</div><span class="badge b-green">✓</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Tambah minimal 15 foto klinik</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Isi deskripsi bisnis di Google Business Profile</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Aktifkan tombol Booking / link WA langsung</div><span class="prio p-m">🟡</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+      <li class="todo-item"><div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>Balas semua review masuk dalam 24 jam</div><span class="prio p-l">🟢 Rutin</span><button class="todo-del" onclick="delTodo(this)">✕</button></li>
+    </ul>
+    <div class="todo-add"><input class="t-inp" id="gmaps-inp" placeholder="Tambah checklist..." onkeydown="if(event.key==='Enter')addTodo('gmaps-todo','gmaps-inp')"><button class="btn-add" onclick="addTodo('gmaps-todo','gmaps-inp')">+</button></div>
+  </div>
+</div>
+
+<!-- ═══ ADS ═══ -->
+<div id="ads" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#FDECEA">📣</div><div><div class="sec-title">Iklan Berbayar</div><div class="sec-desc">Meta Ads, Google Ads, TikTok Ads</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="addAdsCampaign()">+ Campaign</button></div>
+  </div>
+  <div class="alert alert-warning">💡 Fokus organic dulu sampai 8–10 pasien/hari. Ads berbayar idealnya dimulai setelah konten organik konsisten.</div>
+  <div id="ads-campaigns">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div contenteditable style="font-weight:700;font-size:14px">Campaign Skit TikTok</div><div contenteditable style="font-size:11px;color:var(--gray)">Platform: TikTok Ads · Target: Perempuan 20-35 Jaktim · Periode: Agustus 2025</div></div>
+        <span class="badge b-gold" contenteditable>Rencana</span>
+      </div>
+      <div class="g4" style="margin:8px 0">
+        <div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Impressi</div></div>
+        <div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Klik</div></div>
+        <div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Pasien</div></div>
+        <div class="stat"><div class="stat-num" contenteditable>Rp 0</div><div class="stat-label">Budget</div></div>
+      </div>
+      <label class="f-label">🎯 Skenario</label>
+      <div contenteditable style="font-size:11px;line-height:1.6;background:var(--gold-p);padding:8px;border-radius:6px">Boost video skit organik terbaik ke audiences baru di Jaktim. Target: perempuan 18–40, interest: skincare, beauty clinic, perawatan wajah.</div>
+      <label class="f-label" style="margin-top:8px">📊 Evaluasi</label>
+      <div contenteditable style="font-size:11px;line-height:1.6;background:var(--gray-l);padding:8px;border-radius:6px">Isi evaluasi setelah campaign selesai...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ KOL ═══ -->
+<div id="kol" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:var(--gold-p)">⭐</div><div><div class="sec-title">KOL & Influencer</div><div class="sec-desc">Kolaborasi beauty creator</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="addKOLCard()">+ Tambah KOL</button></div>
+  </div>
+  <div class="tips"><div class="tips-t">💡 Strategi KOL Ellis</div><ul>
+    <li>Target: micro-influencer Jaktim 5rb–50rb followers, engagement rate >5%</li>
+    <li>Deal: free treatment 1–2x, mereka posting review + tag @ellisestetikajakarta</li>
+    <li>Selalu minta konten bisa di-repost ke IG & TikTok Ellis</li>
+    <li>Brief harus jelas: jangan jelek-jelekin kompetitor, fokus keunggulan Ellis</li>
+  </ul></div>
+  <div id="kol-cards"></div>
+</div>
+
+<!-- ═══ MGM ═══ -->
+<div id="mgm" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#E8F8EE">👥</div><div><div class="sec-title">Member Get Member</div><div class="sec-desc">Pasien yang bawa/ajak teman — tanpa kode referral</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-green" onclick="addMGMRow()">+ Tambah Baris</button><button class="tb-btn btn-gold" onclick="saveMGMToSheets()">☁️ Simpan ke Sheets</button></div>
+  </div>
+  <!-- REKAP PER BULAN — stat dashboard -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    <span style="font-size:11px;font-weight:600;color:var(--dark)">📅 Lihat bulan:</span>
+    <select id="mgm-stat-month" class="f-select" style="width:auto;font-size:11px" onchange="updateMGMStats()">
+      <option value="">Semua</option>
+      <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+      <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+      <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+      <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+    </select>
+    <select id="mgm-stat-year" class="f-select" style="width:auto;font-size:11px" onchange="updateMGMStats()">
+      <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+    </select>
+  </div>
+  <div class="g3" style="margin-bottom:12px">
+    <div class="stat"><div class="stat-num" id="mgm-bulan" style="color:var(--gold-d)">0</div><div class="stat-label">Pasien Bawa Teman</div><div style="font-size:9px;color:var(--gray);margin-top:2px" id="mgm-stat-period">Semua waktu</div></div>
+    <div class="stat"><div class="stat-num" id="mgm-total" style="color:var(--green)">0</div><div class="stat-label">Teman yang Dibawa</div><div style="font-size:9px;color:var(--gray);margin-top:2px">Total teman</div></div>
+    <div class="stat"><div class="stat-num" id="mgm-reward" style="color:var(--orange)">0</div><div class="stat-label">Reward Diberikan</div><div style="font-size:9px;color:var(--gray);margin-top:2px">Status selesai</div></div>
+  </div>
+  <div class="tips"><div class="tips-t">🎁 Program MGM</div><ul>
+    <li>Pasien yang bawa teman → dapat reward (diskon/free treatment)</li>
+    <li>Teman yang dibawa → dapat harga spesial kunjungan pertama</li>
+    <li>Tidak perlu kode — cukup sebutkan nama yang mereferensikan saat booking</li>
+    <li>CS wajib tanya "Ada yang rekomendasikan?" ke setiap pasien baru</li>
+  </ul></div>
+  <!-- FILTER BULAN -->
+  <div class="card">
+    <div class="card-title">📋 Tracker MGM
+      <select id="mgm-month-filter" class="f-select" style="width:auto;font-size:10px;margin-left:8px" onchange="filterMGM()">
+        <option value="">Semua Bulan</option>
+        <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+        <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+        <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+        <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+      </select>
+      <select id="mgm-year-filter" class="f-select" style="width:auto;font-size:10px;margin-left:4px" onchange="filterMGM()">
+        <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+      </select>
+      <button class="btn-add" style="margin-left:auto;padding:3px 10px;font-size:10px" onclick="addMGMRow()">+ Tambah</button>
+    </div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Pasien yang Bawa</th><th>Nama Teman Dibawa</th><th>Tgl Kunjungan</th><th>Treatment Teman</th><th>Reward Diberikan</th><th>Status Reward</th><th>Del</th></tr></thead>
+      <tbody id="mgm-tbody">
+        <tr><td contenteditable>Nama pasien</td><td contenteditable>Nama teman 1, teman 2</td><td contenteditable>2026-01-01</td><td contenteditable>-</td><td contenteditable>Diskon 25%</td><td><span class="badge b-gold" onclick="cycleMGMStatus(this)" style="cursor:pointer">Proses</span></td><td><button onclick="delRowMGM(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td></tr>
+      </tbody>
+    </table></div>
+    <!-- REKAP BULANAN MGM -->
+    <div style="margin-top:14px">
+      <div class="card-title" style="font-size:12px;margin-bottom:8px">📊 Rekap MGM per Bulan</div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Bulan</th><th>Pasien Bawa</th><th>Teman Dibawa</th><th>Datang</th><th>Reward Selesai</th><th>Catatan</th><th>Del</th></tr></thead>
+        <tbody id="mgm-rekap-tbody">
+          <tr><td contenteditable>Januari 2026</td><td contenteditable>0</td><td contenteditable>0</td><td contenteditable>0</td><td contenteditable>0</td><td contenteditable>-</td><td><button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td></tr>
+        </tbody>
+      </table></div>
+      <button class="add-row-btn" onclick="addMGMRekapRow()">+ Tambah Bulan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROMO ═══ -->
+<div id="promo" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#FEF5E7">🎁</div><div><div class="sec-title">Promo & Event</div><div class="sec-desc">Flash sale, paket spesial, event klinik</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="addPromoCard()">+ Tambah Promo</button></div>
+  </div>
+  <div id="promo-cards">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div contenteditable style="font-weight:700;font-size:14px">Promo Perdana New Patient</div><div contenteditable style="font-size:11px;color:var(--gray)">Periode: Ongoing · Channel: IG + WA</div></div>
+        <span class="badge b-green" contenteditable>Aktif</span>
+      </div>
+      <div class="g2">
+        <div><label class="f-label">📋 Plan</label><div contenteditable style="font-size:11px;line-height:1.6;background:var(--gold-p);padding:8px;border-radius:6px;min-height:60px">Diskon 20% untuk pasien baru kunjungan pertama. Syarat: tunjukkan IG klinik saat booking. Berlaku semua treatment reguler.</div></div>
+        <div><label class="f-label">📊 Evaluasi</label><div class="g2" style="margin-top:4px"><div class="stat"><div class="stat-num" contenteditable>-</div><div class="stat-label">Target</div></div><div class="stat"><div class="stat-num" contenteditable style="color:var(--green)">0</div><div class="stat-label">Aktual</div></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BROSUR ═══ -->
+<div id="brosur" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#F5EEF8">📄</div><div><div class="sec-title">Brosur & Spanduk</div><div class="sec-desc">Materi offline</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="addBrosurRow()">+ Brosur</button><button class="tb-btn btn-blue" onclick="addBBRow()">+ Spanduk</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📄 Tracker Brosur</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Tema</th><th>Desain</th><th>Cetak</th><th>Tersebar</th><th>Sisa</th><th>Respons</th><th>Status</th><th>Del</th></tr></thead>
+      <tbody id="brosur-tbody">
+        <tr><td contenteditable>Facial Premium</td><td contenteditable>File Canva</td><td contenteditable>500</td><td contenteditable>0</td><td contenteditable>500</td><td contenteditable>0</td><td><span class="badge b-gold">Rencana</span></td><td><button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🪧 Tracker Spanduk/Billboard</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Tipe</th><th>Ukuran</th><th>Lokasi</th><th>Tgl Pasang</th><th>Biaya</th><th>Respons</th><th>Status</th><th>Del</th></tr></thead>
+      <tbody id="bb-tbody">
+        <tr><td contenteditable>Spanduk</td><td contenteditable>3x1m</td><td contenteditable>Depan klinik</td><td contenteditable>-</td><td contenteditable>Rp 0</td><td contenteditable>0</td><td><span class="badge b-gold">Rencana</span></td><td><button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ═══ SOP ═══ -->
+<div id="sop" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:var(--gray-l)">📋</div><div><div class="sec-title">SOP Customer Service & WA</div><div class="sec-desc">Panduan admin CS dalam menangani pasien</div></div></div>
+  <div class="card">
+    <div class="card-title">⏰ Jam Operasional CS</div>
+    <div class="g3" style="margin-bottom:8px">
+      <div class="stat"><div class="stat-num" contenteditable>09.00</div><div class="stat-label">Buka WA</div></div>
+      <div class="stat"><div class="stat-num" contenteditable>18.00</div><div class="stat-label">Tutup WA</div></div>
+      <div class="stat"><div class="stat-num" contenteditable>&lt; 5 mnt</div><div class="stat-label">Target Reply</div></div>
+    </div>
+    <div class="tips"><div class="tips-t">⚠️ Aturan Wajib CS</div><ul>
+      <li>Balas WA dalam 5 menit di jam operasional</li>
+      <li>Di luar jam operasional: pasang auto-reply "Hai kak! Kami sedang offline. Akan dibalas besok pagi ya 💛 — Ellis Estetika"</li>
+      <li>Selalu gunakan bahasa yang ramah, santai, tapi tetap profesional</li>
+      <li>Jangan biarkan calon pasien menunggu lebih dari 15 menit tanpa konfirmasi</li>
+    </ul></div>
+  </div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📞 SOP Terima WA Pasien Baru <span>▼</span></div><div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">1. Balas dalam MAX 5 menit
+2. Sapa dengan nama (kalau tahu): "Halo kak [Nama]! 👋"
+3. Tanyakan masalah kulit / treatment yang dicari
+4. Jelaskan benefit singkat Ellis Estetika
+5. Tawarkan jadwal konsultasi: "Mau kami bantu booking kak?"
+6. Kirim lokasi + jam operasional
+
+Jam ops: Senin–Sabtu 09.00–20.00 | Minggu 10.00–17.00
+📍 Jl. Raya Condet No.8, Condet, Jaktim</div></div></div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📋 SOP Input Pasien Saat Kunjungan <span>▼</span></div><div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">1. Sapa pasien: "Selamat datang kak [Nama]! ✨"
+2. Tanya: "Dari mana tahu Ellis Estetika?" → catat di form
+3. Cek apakah pasien baru atau lama (cek member card)
+4. Input di dashboard: nama, HP, sumber, treatment, spend
+5. Pasang stempel loyalty card
+6. Informasikan jadwal FU: "Kami akan follow up H+3 dan H+21 ya kak"
+7. Minta izin foto before (untuk dokumentasi & konten jika setuju)</div></div></div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📩 Script: Pertanyaan Harga & Info Treatment <span>▼</span></div>
+    <div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">"Halo kak [nama]! 😊 Makasih ya sudah menghubungi Ellis Estetika 💛
+
+Untuk treatment [nama], harganya mulai dari Rp [xxx] ya kak. Harga bisa bervariasi tergantung kondisi kulit kak [nama] setelah dikonsultasikan dulu sama dokter kami.
+
+Kalau kak [nama] mau lebih pasti, kita bisa booking konsultasi dulu GRATIS lho kak! 🌿
+
+Mau kakak booking kapan kak? 😊"</div></div>
+  </div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📅 Script: Booking & Konfirmasi <span>▼</span></div>
+    <div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">"Siap kak [nama]! Booking-nya sudah kami catat ya 💛
+
+Detail booking:
+📅 Tanggal: [tanggal]
+⏰ Jam: [jam]
+💉 Treatment: [nama treatment]
+📍 Lokasi: Jl. Raya Condet No.8, Jakarta Timur
+
+Reminder: Datang 10 menit sebelum jadwal ya kak 🌿
+
+Sampai ketemu kak [nama]! 😊✨"</div></div>
+  </div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📞 Script: Follow Up H+3 <span>▼</span></div>
+    <div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">"Halo kak [nama]! 😊 Ini dari Ellis Estetika ya kak.
+
+Gimana kondisi kulit kak [nama] setelah treatment kemarin? Semoga hasilnya sudah mulai kerasa ya kak! ✨
+
+Kalau ada yang mau ditanyain atau ada reaksi yang muncul, langsung chat kami aja ya kak 💛
+
+Have a great day! 🌿 — Admin Ellis Estetika"</div></div>
+  </div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📞 Script: Follow Up H+21 <span>▼</span></div>
+    <div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">"Halo kak [nama]! 🌿 Sudah 3 minggu nih sejak treatment terakhir di Ellis Estetika!
+
+Kulit kak [nama] pasti sudah mulai kelihatan bedanya ya? ✨ Biar hasilnya makin maksimal, ini waktu yang tepat untuk treatment lanjutan kak!
+
+Kami ada slot kosong minggu ini lho, mau kami bantu jadwalkan? 💛 — Admin Ellis Estetika"</div></div>
+  </div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">📞 Script: Follow Up 2 Minggu Sekali (Khusus) <span>▼</span></div>
+    <div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">"Halo kak [nama]! 😊 Sudah 2 minggu nih dari kunjungan terakhir, gimana kondisi kulitnya kak?
+
+Sesuai program perawatan kak [nama], ini waktunya sesi berikutnya ya kak! Biar hasilnya konsisten ✨
+
+Ada slot [hari/tanggal] jam [jam], mau kami book-kan kak? 💛 — Admin Ellis Estetika"</div></div>
+  </div>
+  <div class="sop-card"><div class="sop-header" onclick="toggleSOP(this)">😤 Script: Handling Komplain <span>▼</span></div>
+    <div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">"Halo kak [nama], terima kasih sudah menyampaikan hal ini ke kami 🙏
+
+Kami sangat menyesal mendengar pengalaman kak [nama] yang kurang menyenangkan.
+
+Kami akan langsung follow up ya kak — boleh kami hubungi dalam waktu dekat untuk mendiskusikan solusinya?
+
+Sekali lagi kami mohon maaf kak 💛 — Tim Ellis Estetika"</div></div>
+  </div>
+  <div class="card" style="margin-top:8px">
+    <div class="card-title">➕ Tambah Script SOP Baru</div>
+    <div style="display:flex;gap:6px">
+      <input class="f-input" id="sop-title-inp" placeholder="Nama script..." onkeydown="if(event.key==='Enter')addSOPScript()">
+      <button class="btn-add" onclick="addSOPScript()">+ Tambah</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SUMBER PASIEN ═══ -->
+<div id="sumber" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:#E8F8EE">📈</div><div><div class="sec-title">Sumber Pasien</div><div class="sec-desc">Tracking dari mana pasien datang — per tahun</div></div></div>
+  <!-- Year tabs -->
+  <div class="year-tab-btns" id="year-tab-btns"></div>
+  <div class="card">
+    <div class="card-title" id="src-chart-title">📊 Sumber Pasien</div>
+    <div id="src-chart">
+      <div class="src-bar"><div class="src-label">Instagram</div><div class="src-track"><div class="src-fill" id="sf-ig" style="width:0%;background:#E1306C"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">TikTok</div><div class="src-track"><div class="src-fill" id="sf-tt" style="width:0%;background:#000"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Threads</div><div class="src-track"><div class="src-fill" id="sf-th" style="width:0%;background:var(--purple)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Google Maps</div><div class="src-track"><div class="src-fill" id="sf-gm" style="width:0%;background:#4285F4"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Referral Teman</div><div class="src-track"><div class="src-fill" id="sf-ref" style="width:0%;background:var(--green)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">WhatsApp</div><div class="src-track"><div class="src-fill" id="sf-wa" style="width:0%;background:#25D366"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Walk-in</div><div class="src-track"><div class="src-fill" id="sf-wi" style="width:0%;background:var(--orange)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">KOL/Influencer</div><div class="src-track"><div class="src-fill" id="sf-kol" style="width:0%;background:var(--purple)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Brosur</div><div class="src-track"><div class="src-fill" id="sf-br" style="width:0%;background:var(--gold)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Spanduk/Billboard</div><div class="src-track"><div class="src-fill" id="sf-sp" style="width:0%;background:var(--brown)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+      <div class="src-bar"><div class="src-label">Ads Berbayar</div><div class="src-track"><div class="src-fill" id="sf-ads" style="width:0%;background:var(--red)"></div></div><div class="src-num" contenteditable oninput="updateChart()">0</div></div>
+    </div>
+    <div class="tips" style="margin-top:10px"><div class="tips-t">💡 Cara tracking efektif</div><ul>
+      <li>Wajibkan admin tanya "Dari mana tahu Ellis Estetika?" ke SETIAP pasien baru</li>
+      <li>Input langsung di form pasien saat kunjungan</li>
+      <li>Update chart ini setiap minggu berdasarkan data form</li>
+      <li>Di akhir bulan, lihat channel mana yang paling banyak → fokus investasi ke sana</li>
+    </ul></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📅 Evaluasi Bulanan Sumber Pasien</div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Bulan</th><th>Total Pasien</th><th>Sumber #1</th><th>Sumber #2</th><th>Sumber #3</th><th>Channel Terbaik</th><th>Action Bulan Depan</th><th>Del</th></tr></thead>
+      <tbody id="src-monthly">
+        <tr><td contenteditable>Juni 2025</td><td contenteditable>0</td><td contenteditable>-</td><td contenteditable>-</td><td contenteditable>-</td><td contenteditable>-</td><td contenteditable>Aktifkan TikTok & tracking sumber</td><td><button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td></tr>
+      </tbody>
+    </table></div>
+    <button class="add-row-btn" onclick="addSrcMonthly()">+ Tambah Bulan</button>
+  </div>
+</div>
+
+<!-- ═══ MONTHLY REVIEW ═══ -->
+<div id="monthly" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:var(--gold-p)">📆</div><div><div class="sec-title">Monthly Review</div><div class="sec-desc">Evaluasi bulanan — apa yang berhasil, apa yang perlu diperbaiki</div></div>
+    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="addMonthlyReview()">+ Tambah Bulan</button></div>
+  </div>
+  <div id="monthly-reviews">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div contenteditable style="font-family:'Italiana',serif;font-size:20px">Juni 2025</div>
+        <span class="badge b-green" contenteditable>Bulan Berjalan</span>
+      </div>
+      <div class="g4" style="margin-bottom:10px">
+        <div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Total Pasien</div></div>
+        <div class="stat"><div class="stat-num" contenteditable>Rp 0</div><div class="stat-label">Revenue Est.</div></div>
+        <div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Pasien Baru</div></div>
+        <div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Pasien Balik</div></div>
+      </div>
+      <div class="g2">
+        <div>
+          <label class="f-label">✅ Yang Berhasil Bulan Ini</label>
+          <div contenteditable style="font-size:11px;line-height:1.7;background:#E8F8EE;padding:8px;border-radius:6px;min-height:60px">Tulis apa yang berhasil berjalan baik bulan ini...</div>
+        </div>
+        <div>
+          <label class="f-label">❌ Yang Perlu Diperbaiki</label>
+          <div contenteditable style="font-size:11px;line-height:1.7;background:#FDECEA;padding:8px;border-radius:6px;min-height:60px">Tulis apa yang tidak berjalan dan perlu diperbaiki...</div>
+        </div>
+        <div>
+          <label class="f-label">🎯 Target Bulan Depan</label>
+          <div contenteditable style="font-size:11px;line-height:1.7;background:var(--gold-p);padding:8px;border-radius:6px;min-height:60px">Tulis target spesifik untuk bulan depan...</div>
+        </div>
+        <div>
+          <label class="f-label">💡 Ide & Insight</label>
+          <div contenteditable style="font-size:11px;line-height:1.7;background:#EBF5FB;padding:8px;border-radius:6px;min-height:60px">Ide baru atau insight yang didapat bulan ini...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="settings" class="section">
+  <div class="sec-hdr"><div class="sec-icon" style="background:var(--gray-l)">⚙️</div><div><div class="sec-title">Settings</div><div class="sec-desc">Backup, restore, dan pengaturan dashboard V5</div></div></div>
+
+  <!-- BACKUP & RESTORE -->
+  <div class="settings-card">
+    <div class="settings-title">💾 Backup & Restore Data</div>
+    <div class="alert alert-warning">⚠️ Data tersimpan di browser (localStorage). Backup rutin sangat dianjurkan — terutama sebelum hapus history browser atau ganti perangkat.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <button class="backup-btn" style="background:var(--gold);color:white" onclick="backupData()">📥 Download Backup JSON</button>
+      <label class="backup-btn" style="background:var(--blue);color:white;cursor:pointer">
+        📤 Restore dari JSON
+        <input type="file" accept=".json" id="restore-file" onchange="restoreData(this)" style="display:none">
+      </label>
+      <button class="backup-btn" style="background:var(--red);color:white" onclick="clearAllData()">🗑️ Reset Semua Data</button>
+    </div>
+    <div id="backup-info" style="font-size:11px;color:var(--gray);margin-top:10px"></div>
+  </div>
+
+  <!-- APPS SCRIPT URL — bisa diubah di sini -->
+  <div class="settings-card">
+    <div class="settings-title">🔗 Google Sheets Connection</div>
+    <div class="alert alert-blue" style="margin-bottom:10px">
+      💡 Jika Apps Script di-redeploy dan URL berubah, update di sini — tidak perlu download file baru.
+    </div>
+    <label class="f-label">Apps Script Web App URL</label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input class="f-input" id="sheets-url-input" style="flex:1;min-width:200px;font-size:10px;font-family:monospace" placeholder="https://script.google.com/macros/s/.../exec">
+      <button onclick="saveNewSheetsURL()" class="backup-btn" style="background:var(--gold);color:white;white-space:nowrap">💾 Simpan URL</button>
+      <button onclick="testKoneksiSheets()" class="backup-btn" style="background:var(--blue);color:white;white-space:nowrap">🔌 Test</button>
+      <button onclick="resetSheetsURL()" class="backup-btn" style="background:var(--gray-l);color:var(--gray);white-space:nowrap">↩ Reset Default</button>
+    </div>
+    <div id="sheets-url-status" style="font-size:11px;color:var(--gray);margin-top:8px"></div>
+    <div class="alert alert-warning" style="margin-top:10px;font-size:11px">
+      <strong>⚠️ Jika Load Sheets tidak jalan (CORS error):</strong><br>
+      Update kode Apps Script kamu — tambahkan support JSONP callback. 
+      <button onclick="showAppsScriptUpdate()" style="background:var(--gold);color:white;border:none;padding:3px 10px;border-radius:5px;font-size:10px;cursor:pointer;margin-left:6px;font-family:'Outfit',sans-serif">📋 Lihat Kode Update</button>
+    </div>
+  </div>
+
+  <!-- INFO DASHBOARD -->
+  <div class="settings-card">
+    <div class="settings-title">ℹ️ Info Dashboard</div>
+    <div style="font-size:12px;line-height:1.8;color:var(--brown)">
+      <div>🔖 <strong>Versi:</strong> Ellis Estetika Dashboard V5</div>
+      <div>📅 <strong>Dibuat:</strong> 2025</div>
+      <div>💾 <strong>Save key:</strong> <code>ellis_v5</code></div>
+      <div>⌨️ <strong>Shortcuts:</strong> Ctrl+Z = Undo · Ctrl+Y = Redo · Ctrl+S = Simpan</div>
+      <div>🔄 <strong>Auto-save:</strong> Aktif setiap 1.5 detik setelah perubahan</div>
+    </div>
+  </div>
+
+  <!-- UNDO/REDO INFO -->
+  <div class="settings-card">
+    <div class="settings-title">↩️ Undo & Redo</div>
+    <div style="font-size:12px;color:var(--brown);line-height:1.7">
+      Semua aksi (tambah todo, hapus baris, input, konten, dll.) bisa di-undo dengan <kbd style="background:var(--gray-l);padding:2px 6px;border-radius:4px">Ctrl+Z</kbd> dan redo dengan <kbd style="background:var(--gray-l);padding:2px 6px;border-radius:4px">Ctrl+Y</kbd>. Tombol Undo/Redo juga tersedia di topbar.
+    </div>
+    <div style="font-size:11px;color:var(--gray);margin-top:6px">Stack: <span id="undo-stack-info">0 aksi tersimpan</span></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- CONTENT MODAL -->
+<div class="overlay" id="cal-modal">
+  <div class="modal">
+    <div style="font-family:'Italiana',serif;font-size:18px;margin-bottom:4px">Tambah / Edit Konten</div>
+    <div id="m-date-disp" style="font-size:11px;color:var(--gray);margin-bottom:10px"></div>
+    <button class="modal-close" onclick="closeModal('cal-modal')">✕</button>
+    <label class="f-label">Tanggal</label><input class="f-input" id="m-date-inp" type="date">
+    <label class="f-label">Platform</label>
+    <select class="f-select" id="m-plat"><option value="ig">📸 Instagram</option><option value="tt">🎵 TikTok</option><option value="th">🧵 Threads</option></select>
+    <label class="f-label">Tipe Konten</label>
+    <select class="f-select" id="m-type"><option value="skit">🎭 Skit/Roleplay</option><option value="edu">📚 Edukasi</option><option value="before">✨ Before-After</option><option value="promo">🎁 Promo</option><option value="testi">⭐ Testimoni</option><option value="tips">💡 Tips</option><option value="bts">🎬 Behind the Scenes</option></select>
+    <label class="f-label">Judul / Skenario *</label>
+    <input class="f-input" id="m-title" placeholder="Judul konten">
+    <label class="f-label">Hook Pembuka (3 detik pertama)</label>
+    <input class="f-input" id="m-hook" placeholder="Kalimat pertama yang menarik">
+    <label class="f-label">Caption / Script</label>
+    <textarea class="f-textarea" id="m-caption" placeholder="Caption lengkap atau script konten..."></textarea>
+    <label class="f-label">Status</label>
+    <select class="f-select" id="m-status"><option value="ide">💡 Ide</option><option value="draft">📝 Draft</option><option value="siap">✅ Siap Upload</option><option value="posted">🚀 Sudah Posting</option></select>
+    <label class="f-label">Views / Likes (setelah posting)</label>
+    <input class="f-input" id="m-views" placeholder="-">
+    <div class="modal-actions">
+      <button class="btn-del-m" onclick="deleteContent()">🗑 Hapus</button>
+      <button class="btn-save-m" onclick="saveContent()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAHABAT MODAL -->
+<div class="overlay" id="sahabat-modal">
+  <div class="modal">
+    <div style="font-family:'Italiana',serif;font-size:18px;margin-bottom:10px">Tambah Member Sahabat Ellis</div>
+    <button class="modal-close" onclick="closeModal('sahabat-modal')">✕</button>
+    <label class="f-label">Nama Pasien *</label><input class="f-input" id="sb-nama" placeholder="Nama pasien">
+    <label class="f-label">No HP</label><input class="f-input" id="sb-hp" placeholder="08xx">
+    <label class="f-label">Tier Loyalty</label>
+    <select class="f-select" id="sb-tier"><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option></select>
+    <label class="f-label">Status Grup WA</label>
+    <select class="f-select" id="sb-grup"><option value="belum">Belum Diundang</option><option value="invited">Sudah Diundang</option><option value="joined">Sudah Bergabung</option></select>
+    <div class="modal-actions">
+      <button class="btn-save-m" onclick="saveSahabat()">💾 Tambah Member</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════════
+// SHEETS_URL — bisa diubah dari halaman Settings tanpa perlu edit file
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwU4S09hLQES45E0XLykjoewLCWD_ROB9SaA1pouapWNrrvzmkEnkNfFdFCkfuOIW5W/exec';
+let SHEETS_URL = localStorage.getItem('ellis_sheets_url') || DEFAULT_SHEETS_URL;
+function getActiveURL(){ return localStorage.getItem('ellis_sheets_url') || DEFAULT_SHEETS_URL; }
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const SAVE_KEY = 'ellis_v5';
+
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+const calData = {};
+let masterData=[], inactiveData=[], bdayData=[], loyaltyData=[], fuData=[];
+let srcYearData = {}; // { 2025: {ig:0, tt:0, ...}, 2026: {...} }
+let activeYear = new Date().getFullYear();
+
+// Bank Ide data
+let igIdeas=[], ttIdeas=[], thIdeas=[];
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayKey(){ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; }
+
+let todayPatients=[];
+try{todayPatients=JSON.parse(localStorage.getItem('ellis_today_'+todayKey())||'[]');}catch(e){}
+
+// ═══════════════════════════════════════════════════════
+// UNDO / REDO — FULL (Version B)
+// ═══════════════════════════════════════════════════════
+const MAX_STACK = 50;
+let undoStack = [];
+let redoStack = [];
+let isUndoRedoOp = false;
+
+function captureSnapshot(label) {
+  if (isUndoRedoOp) return;
+  const snap = {
+    label: label || 'aksi',
+    html: document.querySelector('.main').innerHTML,
+    calData: JSON.parse(JSON.stringify(calData)),
+    igIdeas: JSON.parse(JSON.stringify(igIdeas)),
+    ttIdeas: JSON.parse(JSON.stringify(ttIdeas)),
+    thIdeas: JSON.parse(JSON.stringify(thIdeas)),
+    srcYearData: JSON.parse(JSON.stringify(srcYearData)),
+    time: Date.now()
+  };
+  undoStack.push(snap);
+  if (undoStack.length > MAX_STACK) undoStack.shift();
+  redoStack = [];
+  updateUndoButtons();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const current = {
+    html: document.querySelector('.main').innerHTML,
+    calData: JSON.parse(JSON.stringify(calData)),
+    igIdeas: JSON.parse(JSON.stringify(igIdeas)),
+    ttIdeas: JSON.parse(JSON.stringify(ttIdeas)),
+    thIdeas: JSON.parse(JSON.stringify(thIdeas)),
+    srcYearData: JSON.parse(JSON.stringify(srcYearData)),
+  };
+  redoStack.push(current);
+  const snap = undoStack.pop();
+  applySnapshot(snap);
+  toast('↩ Undo: ' + (snap.label || 'aksi'));
+  updateUndoButtons();
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  const current = {
+    html: document.querySelector('.main').innerHTML,
+    calData: JSON.parse(JSON.stringify(calData)),
+    igIdeas: JSON.parse(JSON.stringify(igIdeas)),
+    ttIdeas: JSON.parse(JSON.stringify(ttIdeas)),
+    thIdeas: JSON.parse(JSON.stringify(thIdeas)),
+    srcYearData: JSON.parse(JSON.stringify(srcYearData)),
+  };
+  undoStack.push(current);
+  const snap = redoStack.pop();
+  applySnapshot(snap);
+  toast('↪ Redo');
+  updateUndoButtons();
+}
+
+function applySnapshot(snap) {
+  isUndoRedoOp = true;
+  document.querySelector('.main').innerHTML = snap.html;
+  Object.keys(calData).forEach(k=>delete calData[k]);
+  Object.assign(calData, snap.calData||{});
+  igIdeas = JSON.parse(JSON.stringify(snap.igIdeas||[]));
+  ttIdeas = JSON.parse(JSON.stringify(snap.ttIdeas||[]));
+  thIdeas = JSON.parse(JSON.stringify(snap.thIdeas||[]));
+  Object.keys(srcYearData).forEach(k=>delete srcYearData[k]);
+  Object.assign(srcYearData, snap.srcYearData||{});
+  renderCal();
+  renderBankIdeas();
+  initYearTabs();
+  isUndoRedoOp = false;
+  saveAll();
+}
+
+function updateUndoButtons() {
+  const btnU = document.getElementById('btn-undo');
+  const btnR = document.getElementById('btn-redo');
+  if (btnU) btnU.disabled = undoStack.length === 0;
+  if (btnR) btnR.disabled = redoStack.length === 0;
+  const info = document.getElementById('undo-stack-info');
+  if (info) info.textContent = undoStack.length + ' aksi tersimpan';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveAll(); }
+});
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function go(id, el) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  if (el) el.classList.add('active');
+  else { const l=document.querySelector(`[onclick*="'${id}'"]`); if(l) l.classList.add('active'); }
+}
+function getSBLink(id){ return document.querySelector(`[onclick*="'${id}'"]`); }
+
+// ═══════════════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════════════
+let saveTimer;
+function saveAll() {
+  try {
+    const payload = {
+      html: document.querySelector('.main').innerHTML,
+      calData: JSON.parse(JSON.stringify(calData)),
+      igIdeas, ttIdeas, thIdeas, srcYearData,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+    setSyncInfo('✓ Tersimpan '+new Date().toLocaleTimeString('id-ID'));
+  } catch(e){ toast('⚠️ Gagal simpan: '+e.message); }
+}
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (d.html) document.querySelector('.main').innerHTML = d.html;
+    if (d.calData) Object.assign(calData, d.calData);
+    if (d.igIdeas) igIdeas = d.igIdeas;
+    if (d.ttIdeas) ttIdeas = d.ttIdeas;
+    if (d.thIdeas) thIdeas = d.thIdeas;
+    if (d.srcYearData) Object.assign(srcYearData, d.srcYearData);
+    if (d.savedAt) setSyncInfo('✓ '+new Date(d.savedAt).toLocaleString('id-ID'));
+    return true;
+  } catch(e){ console.warn('Load error:', e); return false; }
+}
+
+// Auto-save on input
+document.addEventListener('input', ()=>{ clearTimeout(saveTimer); saveTimer=setTimeout(()=>saveAll(),1500); });
+document.addEventListener('click', e=>{
+  if(e.target.classList.contains('chk')) setTimeout(saveAll,100);
+  ['cal-modal','sahabat-modal'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&e.target===el) closeModal(id);
+  });
+});
+document.addEventListener('input', e=>{
+  if(e.target.id==='srch-pasien'||e.target.id==='fltr-loyalty'||e.target.id==='fltr-sumber') renderMasterTable();
+  if(e.target.id==='srch-loyalty'||e.target.id==='fltr-tier') filterLoyalty();
+});
+
+// ═══════════════════════════════════════════════════════
+// BACKUP & RESTORE
+// ═══════════════════════════════════════════════════════
+// ── MANAGE SHEETS URL ──
+function showAppsScriptUpdate(){
+  const code = `function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = (e && e.parameter && e.parameter.sheet) ? e.parameter.sheet : 'master';
+  let sheetName;
+  if (sheet === 'inactive') sheetName = 'Inactive patient 3 BULAN TERAKH';
+  else if (sheet === 'treatment') sheetName = 'RIWAYAT TREATMENT';
+  else sheetName = 'MASTER DATA PASIEN';
+  const ws = ss.getSheetByName(sheetName) || ss.getSheets()[0];
+  const data = ws.getDataRange().getValues();
+  const cleaned = data.map(function(row) {
+    return row.map(function(cell) {
+      if (cell instanceof Date) {
+        return Utilities.formatDate(cell, 'Asia/Jakarta', 'dd/MM/yyyy');
+      }
+      return cell;
+    });
+  });
+  const result = JSON.stringify({ status: 'ok', data: cleaned });
+  // Support JSONP untuk bypass CORS
+  const callback = e && e.parameter && e.parameter.callback;
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + result + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(result)
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:white;border-radius:14px;padding:20px;max-width:580px;width:93%;max-height:90vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:15px;margin-bottom:8px">📋 Update Apps Script</div>
+    <div style="font-size:11px;color:#555;line-height:1.6;margin-bottom:10px">
+      Copy kode doGet() di bawah → ganti di Apps Script kamu → Save → Deploy sebagai New Deployment → Who has access: <strong>Anyone</strong>
+    </div>
+    <pre style="background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:10px;overflow-x:auto;line-height:1.5">${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="navigator.clipboard.writeText(\`${code.replace(/\`/g,'\`')}\`).then(()=>toast('✓ Kode dicopy!'))" style="background:#D4A017;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">📋 Copy Kode</button>
+      <button onclick="this.closest('div[style]').remove()" style="background:#f0f0f0;border:none;padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer">Tutup</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function saveNewSheetsURL(){
+  const inp = document.getElementById('sheets-url-input');
+  const url = inp?.value?.trim();
+  if(!url || !url.startsWith('https://script.google.com')){
+    toast('⚠️ URL tidak valid — harus dari script.google.com');
+    return;
+  }
+  localStorage.setItem('ellis_sheets_url', url);
+  SHEETS_URL = url;
+  const status = document.getElementById('sheets-url-status');
+  if(status) status.innerHTML = '✅ URL disimpan: <code style="font-size:10px">'+url.substring(0,60)+'...</code>';
+  toast('✓ URL baru disimpan! Klik Test untuk verifikasi.');
+}
+
+function resetSheetsURL(){
+  localStorage.removeItem('ellis_sheets_url');
+  SHEETS_URL = DEFAULT_SHEETS_URL;
+  const inp = document.getElementById('sheets-url-input');
+  if(inp) inp.value = DEFAULT_SHEETS_URL;
+  const status = document.getElementById('sheets-url-status');
+  if(status) status.textContent = 'URL direset ke default.';
+  toast('↩ URL direset ke default');
+}
+
+function initSheetsURLInput(){
+  const inp = document.getElementById('sheets-url-input');
+  if(!inp) return;
+  const saved = localStorage.getItem('ellis_sheets_url');
+  inp.value = saved || DEFAULT_SHEETS_URL;
+  const status = document.getElementById('sheets-url-status');
+  if(status){
+    if(saved) status.innerHTML = '✅ Pakai URL custom: <code style="font-size:10px">'+saved.substring(0,60)+'...</code>';
+    else status.textContent = 'Pakai URL default (belum ada perubahan).';
+  }
+}
+
+function backupData() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) { toast('⚠️ Belum ada data untuk dibackup'); return; }
+  const blob = new Blob([raw], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Ellis_Dashboard_V5_Backup_'+todayStr()+'.json';
+  a.click();
+  const info = document.getElementById('backup-info');
+  if(info) info.textContent = '✓ Backup berhasil didownload pada ' + new Date().toLocaleString('id-ID');
+  toast('✓ Backup berhasil!');
+}
+
+function restoreData(input) {
+  const file = input.files[0]; if (!file) return;
+  if (!confirm('⚠️ Restore akan MENGGANTI semua data saat ini. Lanjutkan?')) { input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      toast('✓ Restore berhasil! Memuat ulang...');
+      setTimeout(()=>location.reload(),1200);
+    } catch(err){ toast('⚠️ File tidak valid: '+err.message); }
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function clearAllData() {
+  if (!confirm('⚠️ HAPUS SEMUA DATA?\n\nSemua data di dashboard akan dihapus permanen.\nPastikan sudah backup dulu!')) return;
+  if (!confirm('Konfirmasi sekali lagi: HAPUS SEMUA DATA?')) return;
+  localStorage.removeItem(SAVE_KEY);
+  toast('✓ Data dihapus. Memuat ulang...');
+  setTimeout(()=>location.reload(),1200);
+}
+
+// ═══════════════════════════════════════════════════════
+// TODO
+// ═══════════════════════════════════════════════════════
+function toggleChk(el) {
+  captureSnapshot('toggle todo');
+  el.classList.toggle('done');
+  const txt=el.nextElementSibling;
+  if(txt&&txt.classList.contains('todo-txt')) txt.classList.toggle('done');
+  el.innerHTML = el.classList.contains('done') ? '<span>✓</span>' : '';
+  saveAll();
+}
+
+function addTodo(listId, inpId) {
+  const inp=document.getElementById(inpId);
+  const txt=inp.value.trim(); if(!txt) return;
+  captureSnapshot('tambah todo');
+  const li=document.createElement('li'); li.className='todo-item';
+  li.innerHTML=`<div class="chk" onclick="toggleChk(this)"></div><div class="todo-txt" contenteditable>${txt}</div><span class="prio p-l">🟢</span><button class="todo-del" onclick="delTodo(this)">✕</button>`;
+  document.getElementById(listId)?.appendChild(li);
+  inp.value=''; saveAll();
+}
+
+function delTodo(btn) {
+  captureSnapshot('hapus todo');
+  btn.closest('li')?.remove();
+  saveAll();
+}
+
+function delRow(btn) {
+  captureSnapshot('hapus baris');
+  btn.closest('tr')?.remove();
+  saveAll();
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CALENDAR — MULTI-YEAR + MULTI-KONTEN PER HARI
+// ═══════════════════════════════════════════════════════
+function initCalYearSelect() {
+  const sel = document.getElementById('cal-year-select'); if (!sel) return;
+  sel.innerHTML='';
+  const start=new Date().getFullYear()-1;
+  for(let y=start;y<=start+4;y++){
+    const opt=document.createElement('option');
+    opt.value=y; opt.textContent=y;
+    if(y===calYear) opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+
+function renderCal() {
+  const titleEl = document.getElementById('cal-title');
+  if(titleEl) titleEl.textContent=`${MONTHS[calMonth]} ${calYear}`;
+  const body=document.getElementById('cal-body'); if(!body) return;
+  body.innerHTML='';
+  const showIG=document.getElementById('show-ig')?.checked!==false;
+  const showTT=document.getElementById('show-tt')?.checked!==false;
+  const showTH=document.getElementById('show-th')?.checked!==false;
+  const first=new Date(calYear,calMonth,1);
+  let start=first.getDay(); start=start===0?6:start-1;
+  const days=new Date(calYear,calMonth+1,0).getDate();
+  const today=new Date();
+  let d=1-start;
+  for(let i=0;i<42;i++){
+    const cell=document.createElement('div'); cell.className='cal-cell';
+    if(d<1||d>days){ cell.classList.add('other'); }
+    else {
+      const dk=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if(today.getDate()===d&&today.getMonth()===calMonth&&today.getFullYear()===calYear) cell.classList.add('today');
+      const items=(calData[dk]||[]).filter(c=>(c.platform==='ig'&&showIG)||(c.platform==='tt'&&showTT)||(c.platform==='th'&&showTH));
+      if(items.length===1) cell.classList.add('has-'+items[0].platform);
+      if(items.length>1) cell.style.background='linear-gradient(135deg,#FFF0F5 33%,#F5F5F5 33%,#F5F5F5 66%,#F5F0FF 66%)';
+      const dateDiv=`<div class="cal-date">${d}</div>`;
+      const itemEls=items.slice(0,3).map((c,i)=>`<span class="cal-item ci-${c.platform}" onclick="event.stopPropagation();openAddContent('${dk}',${i})">${c.title||'Konten'}</span>`).join('');
+      const moreEl=items.length>3?`<span style="font-size:8px;color:var(--gray)">+${items.length-3} lagi</span>`:'';
+      const addBtn=`<button class="cal-add-btn" onclick="event.stopPropagation();openAddContent('${dk}')">+</button>`;
+      cell.innerHTML=dateDiv+itemEls+moreEl+addBtn;
+      cell.onclick=()=>{ if(items.length===0) openAddContent(dk); };
+    }
+    d++; body.appendChild(cell);
+  }
+  renderKontenList();
+}
+
+function changeMonth(d){ calMonth+=d; if(calMonth>11){calMonth=0;calYear++}else if(calMonth<0){calMonth=11;calYear--} renderCal(); initCalYearSelect(); }
+
+let currentDK=null, currentIdx=null;
+function openAddContent(dk, idx) {
+  currentDK=dk||todayStr(); currentIdx=idx!==undefined?idx:null;
+  document.getElementById('m-date-inp').value=currentDK;
+  document.getElementById('m-date-disp').textContent='Tanggal: '+currentDK;
+  const e=(idx!==null&&calData[currentDK])?calData[currentDK][idx]:{};
+  document.getElementById('m-title').value=e.title||'';
+  document.getElementById('m-caption').value=e.caption||'';
+  document.getElementById('m-hook').value=e.hook||'';
+  document.getElementById('m-status').value=e.status||'ide';
+  document.getElementById('m-type').value=e.type||'skit';
+  document.getElementById('m-plat').value=e.platform||'ig';
+  document.getElementById('m-views').value=e.views||'';
+  document.getElementById('cal-modal').classList.add('open');
+}
+
+function saveContent() {
+  captureSnapshot('simpan konten');
+  const dk=document.getElementById('m-date-inp').value||currentDK;
+  if(!calData[dk]) calData[dk]=[];
+  const entry={
+    title:document.getElementById('m-title').value,
+    caption:document.getElementById('m-caption').value,
+    hook:document.getElementById('m-hook').value,
+    status:document.getElementById('m-status').value,
+    type:document.getElementById('m-type').value,
+    platform:document.getElementById('m-plat').value,
+    views:document.getElementById('m-views').value,
+  };
+  if(currentIdx!==null&&calData[dk]&&calData[dk][currentIdx]) calData[dk][currentIdx]=entry;
+  else calData[dk].push(entry);
+  renderCal(); closeModal('cal-modal'); saveAll(); toast('✓ Konten tersimpan');
+}
+
+function deleteContent() {
+  captureSnapshot('hapus konten');
+  if(currentDK&&currentIdx!==null&&calData[currentDK]){
+    calData[currentDK].splice(currentIdx,1);
+    if(!calData[currentDK].length) delete calData[currentDK];
+  } else if(currentDK) delete calData[currentDK];
+  renderCal(); closeModal('cal-modal'); saveAll();
+}
+
+function renderKontenList() {
+  const tbody=document.getElementById('konten-list-tbody'); if(!tbody) return;
+  const all=[];
+  Object.entries(calData).forEach(([date,items])=>items.forEach((c,i)=>all.push({date,...c,idx:i})));
+  all.sort((a,b)=>a.date.localeCompare(b.date));
+  tbody.innerHTML=all.map(c=>`<tr>
+    <td>${c.date}</td>
+    <td><span class="badge" style="background:${c.platform==='ig'?'#E1306C':c.platform==='tt'?'#000':'#6C3483'};color:white">${c.platform==='ig'?'📸 IG':c.platform==='tt'?'🎵 TT':'🧵 TH'}</span></td>
+    <td>${c.type}</td><td contenteditable>${c.title||'-'}</td>
+    <td style="font-size:10px" contenteditable>${c.hook||'-'}</td>
+    <td><span class="badge b-${c.status==='posted'?'green':c.status==='siap'?'blue':'gold'}">${c.status}</span></td>
+    <td contenteditable>${c.views||'-'}</td>
+    <td><button onclick="openAddContent('${c.date}',${c.idx})" style="background:var(--gold);color:white;border:none;padding:2px 7px;border-radius:4px;font-size:10px;cursor:pointer">Edit</button></td>
+  </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:16px">Belum ada konten terjadwal</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════
+// BANK IDE — IG / TT / TH dengan date + sync ke kalender
+// ═══════════════════════════════════════════════════════
+function renderBankIdeas() {
+  renderIdeaList('ig-ideas-list', igIdeas, 'ig', '#E1306C');
+  renderIdeaList('tt-ideas-list', ttIdeas, 'tt', '#000');
+  renderIdeaList('th-ideas-list', thIdeas, 'th', '#6C3483');
+}
+
+function renderIdeaList(containerId, ideas, platform, color) {
+  const c=document.getElementById(containerId); if(!c) return;
+  if(!ideas.length){ c.innerHTML='<div style="font-size:11px;color:var(--gray);padding:10px 0">Belum ada ide. Klik "+ Ide" untuk menambah.</div>'; return; }
+  c.innerHTML=ideas.map((idea,i)=>`
+    <div class="idea-card">
+      <div class="idea-card-hdr">
+        <div class="idea-title" contenteditable onblur="updateIdeaField('${platform}',${i},'title',this.innerText)">${idea.title||'Ide Baru'}</div>
+        <div class="idea-meta">
+          <span class="badge" style="background:${color};color:white;cursor:default">${idea.type||'Ide'}</span>
+          <span class="badge b-${idea.status==='posted'?'green':idea.status==='siap'?'blue':'gold'}" onclick="cycleIdeaStatus('${platform}',${i},this)">${idea.status||'Ide'}</span>
+          <button class="idea-del-btn" onclick="deleteIdea('${platform}',${i})">✕</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--gray);margin-bottom:6px" contenteditable onblur="updateIdeaField('${platform}',${i},'hook',this.innerText)">${idea.hook||'Hook / notes...'}</div>
+      <div class="idea-date-wrap">
+        <span style="font-size:11px;color:var(--dark)">📅 Jadwalkan:</span>
+        <input type="date" class="idea-date-inp" value="${idea.date||''}" onchange="updateIdeaDate('${platform}',${i},this.value)">
+        <button class="idea-sync-btn" onclick="syncIdeaToCalendar('${platform}',${i})">→ Sync Kalender</button>
+        ${idea.date?`<span style="font-size:10px;color:var(--green)">✓ ${idea.date}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function getIdeaArr(platform){ return platform==='ig'?igIdeas:platform==='tt'?ttIdeas:thIdeas; }
+
+function addIgIdea(){ captureSnapshot('tambah ide ig'); igIdeas.push({title:'Ide Konten Baru',hook:'',status:'ide',type:'skit',date:'',platform:'ig'}); renderBankIdeas(); saveAll(); }
+function addTTIdea(){ captureSnapshot('tambah ide tt'); ttIdeas.push({title:'Ide Konten Baru',hook:'',status:'ide',type:'skit',date:'',platform:'tt'}); renderBankIdeas(); saveAll(); }
+function addThIdea(){ captureSnapshot('tambah ide th'); thIdeas.push({title:'Ide Post Baru',hook:'',status:'ide',type:'tips',date:'',platform:'th'}); renderBankIdeas(); saveAll(); }
+
+function updateIdeaField(platform, i, field, val){ getIdeaArr(platform)[i][field]=val; saveAll(); }
+function updateIdeaDate(platform, i, val){ getIdeaArr(platform)[i].date=val; saveAll(); renderBankIdeas(); }
+
+function cycleIdeaStatus(platform, i, el){
+  const statuses=['ide','draft','siap','posted'];
+  const labels=['💡 Ide','📝 Draft','✅ Siap','🚀 Sudah'];
+  const badges=['b-gold','b-gray','b-blue','b-green'];
+  const arr=getIdeaArr(platform);
+  const cur=statuses.indexOf(arr[i].status||'ide');
+  const next=(cur+1)%statuses.length;
+  arr[i].status=statuses[next];
+  el.textContent=statuses[next];
+  el.className='badge '+badges[next];
+  saveAll();
+}
+
+function deleteIdea(platform, i){
+  captureSnapshot('hapus ide');
+  getIdeaArr(platform).splice(i,1);
+  renderBankIdeas(); saveAll();
+}
+
+function syncIdeaToCalendar(platform, i){
+  const arr=getIdeaArr(platform);
+  const idea=arr[i];
+  if(!idea.date){ toast('⚠️ Set tanggal dulu sebelum sync!'); return; }
+  captureSnapshot('sync ide ke kalender');
+  if(!calData[idea.date]) calData[idea.date]=[];
+  calData[idea.date].push({
+    platform:idea.platform||platform,
+    type:idea.type||'ide',
+    title:idea.title,
+    hook:idea.hook,
+    caption:'',
+    status:idea.status==='ide'?'ide':idea.status,
+    views:''
+  });
+  idea.status='siap';
+  renderCal(); renderBankIdeas(); saveAll();
+  toast(`✓ Ide "«${idea.title}»" disync ke kalender ${idea.date}`);
+}
+
+// ═══════════════════════════════════════════════════════
+// LOYALTY STAMPS — V5 with card reset + tier upgrade
+// ═══════════════════════════════════════════════════════
+function renderStamps(id, filled) {
+  const c=document.getElementById(id); if(!c) return; c.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const s=document.createElement('div');
+    s.className='stamp'+(i<=filled?' filled':'')+(i===4||i===10?' reward-stamp':'');
+    s.textContent=i<=filled?(i===4||i===10?'🎁':'✓'):(i===4||i===10?'·':'');
+    c.appendChild(s);
+  }
+}
+
+function addStampToMember(btn) {
+  // Increment stamp in loyalty table row
+  const row = btn.closest('tr'); if(!row) return;
+  captureSnapshot('tambah stempel');
+  const stampCell = row.querySelector('.stamp-count');
+  const cardCell = row.querySelector('.card-num');
+  const klaim4Cell = row.querySelector('.klaim4');
+  const klaim10Cell = row.querySelector('.klaim10');
+  const tierCell = row.querySelector('.tier-cell');
+  if(!stampCell) return;
+  let count=parseInt(stampCell.textContent)||0;
+  count++;
+  if(count>10) {
+    // Reset: start new card
+    const cardNum=(parseInt(cardCell?.textContent)||1)+1;
+    if(cardCell) cardCell.textContent=cardNum;
+    count=1;
+    if(klaim10Cell) klaim10Cell.innerHTML=`<span class="badge b-green">✓ Diklaim</span>`;
+    toast('🎉 Kartu ke-'+cardNum+' dimulai! Reward ke-10 sudah diklaim.');
+    // Auto tier upgrade check
+    autoUpgradeTier(row, cardNum, tierCell);
+  }
+  stampCell.textContent=count;
+  if(count===4){ toast('🎁 Stempel ke-4! Reward bisa diklaim.'); }
+  if(count===10){ toast('🎁 Stempel ke-10! Reward diklaim, siap reset kartu.'); }
+  renderMiniStamps(row, count);
+  saveAll();
+}
+
+function autoUpgradeTier(row, cardNum, tierCell){
+  if(!tierCell) return;
+  const cur=tierCell.textContent.toLowerCase();
+  if(cardNum>=3&&cur==='bronze'){ tierCell.textContent='Silver'; tierCell.className='tier-cell badge b-silver'; toast('⬆️ Upgrade tier ke SILVER!'); }
+  else if(cardNum>=5&&cur==='silver'){ tierCell.textContent='Gold'; tierCell.className='tier-cell badge b-gold-card'; toast('⬆️ Upgrade tier ke GOLD! 🥇'); }
+}
+
+function renderMiniStamps(row, filled){
+  const stampDiv=row.querySelector('.mini-stamps'); if(!stampDiv) return;
+  stampDiv.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const s=document.createElement('div');
+    s.style.cssText=`width:14px;height:14px;border-radius:50%;border:1.5px solid ${i===4||i===10?'#FFD700':'rgba(0,0,0,.3)'};display:inline-flex;align-items:center;justify-content:center;font-size:7px;margin:1px;background:${i<=filled?(i===4||i===10?'#FFD700':'var(--gold)'):'transparent'}`;
+    s.textContent=i<=filled?(i===4||i===10?'🎁':'✓'):'';
+    stampDiv.appendChild(s);
+  }
+}
+
+function toggleKlaim(el){
+  const cur=el.classList.contains('b-green');
+  el.className='badge b-'+(cur?'red':'green');
+  el.textContent=cur?'Belum':'✓ Sudah';
+  saveAll();
+}
+
+// ═══════════════════════════════════════════════════════
+// INPUT PASIEN
+// ═══════════════════════════════════════════════════════
+function getFormData(){
+  const fuType=document.getElementById('pt-fu-type')?.value||'standard';
+  const tgl=document.getElementById('pt-tgl')?.value||todayStr();
+  const d=new Date(tgl);
+  let fuSched='';
+  if(fuType==='standard'){
+    const d3=new Date(d); d3.setDate(d3.getDate()+3);
+    const d21=new Date(d); d21.setDate(d21.getDate()+21);
+    fuSched=`H+3: ${d3.toISOString().slice(0,10)} | H+21: ${d21.toISOString().slice(0,10)}`;
+  } else if(fuType==='biweekly'){
+    const d14=new Date(d); d14.setDate(d14.getDate()+14);
+    fuSched=`Tiap 2 minggu, mulai: ${d14.toISOString().slice(0,10)}`;
+  } else if(fuType==='monthly'){
+    const d30=new Date(d); d30.setDate(d30.getDate()+30);
+    fuSched=`Bulanan, mulai: ${d30.toISOString().slice(0,10)}`;
+  } else fuSched='Tidak ada FU';
+  return {
+    waktu:new Date().toLocaleTimeString('id-ID'),
+    tanggal:tgl,
+    member:document.getElementById('pt-member')?.value||'BARU',
+    nama:document.getElementById('pt-nama')?.value||'',
+    hp:document.getElementById('pt-hp')?.value||'',
+    lahir:document.getElementById('pt-lahir')?.value||'',
+    sumber:document.getElementById('pt-sumber')?.value||'',
+    treatment:document.getElementById('pt-treatment')?.value||'',
+    spend:document.getElementById('pt-spend')?.value||'0',
+    masalah:document.getElementById('pt-masalah')?.value||'',
+    loyalty:document.getElementById('pt-loyalty')?.value||'',
+    mgm:document.getElementById('pt-mgm')?.value||'',
+    fuSched,
+    notes:document.getElementById('pt-notes')?.value||''
+  };
+}
+
+async function submitPatient(){
+  const data=getFormData();
+  if(!data.nama){ toast('⚠️ Nama pasien harus diisi!'); return; }
+  captureSnapshot('input pasien');
+  todayPatients.push(data);
+  localStorage.setItem('ellis_today_'+todayKey(), JSON.stringify(todayPatients));
+  renderTodayTable();
+
+  // Hitung FU H+3 dan H+21
+  const tglDate = new Date(data.tanggal);
+  const fuH3 = new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
+  const fuH21 = new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
+  const fmtD = d => d.toLocaleDateString('id-ID');
+
+  // Build row sesuai urutan kolom MASTER DATA PASIEN:
+  // 0=NO MEMBER, 1=NAMA, 2=NO.HP, 3=TGL LAHIR, 4=UMUR
+  // 5=SUMBER, 6=INSTAGRAM, 7=MASALAH UTAMA, 8=MASALAH KEDUA
+  // 9=TERAKHIR DATANG, 10=TOTAL VISIT, 11=TOTAL SPEND
+  // 12=FU H+3, 13=STATUS H+3, 14=FU H+21, 15=STATUS H+21
+  // 16=LOYALTY, 17=STAMP, 18=REWARD 4, 19=REWARD 10
+  // 20=REFERAL COUNT, 21=REVIEW, 22=WA GRUP, 23=BIRTHDAY FU, 24=NOTES, 25=BEFORE AFTER
+  const row = [
+    data.member||'BARU',     // 0 NO MEMBER
+    data.nama,               // 1 NAMA
+    data.hp||'',             // 2 NO.HP
+    data.lahir||'',          // 3 TGL LAHIR
+    '',                      // 4 UMUR (kosong, bisa dihitung)
+    data.sumber||'',         // 5 SUMBER
+    '',                      // 6 INSTAGRAM
+    data.masalah||'',        // 7 MASALAH UTAMA
+    '',                      // 8 MASALAH KEDUA
+    data.tanggal,            // 9 TERAKHIR DATANG
+    '1',                     // 10 TOTAL VISIT
+    data.spend||'0',         // 11 TOTAL SPEND
+    fmtD(fuH3),              // 12 FU H+3
+    'belum',                 // 13 STATUS H+3
+    fmtD(fuH21),             // 14 FU H+21
+    'belum',                 // 15 STATUS H+21
+    data.loyalty||'',        // 16 LOYALTY
+    '0',                     // 17 STAMP
+    '',                      // 18 REWARD 4
+    '',                      // 19 REWARD 10
+    data.mgm?'1':'0',        // 20 REFERAL COUNT
+    '',                      // 21 REVIEW
+    '',                      // 22 WA GRUP
+    '',                      // 23 BIRTHDAY FU
+    data.notes||'',          // 24 NOTES
+    ''                       // 25 BEFORE AFTER
+  ];
+
+  setSyncInfo('⏳ Menyimpan pasien ke Sheets...');
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'append',
+        sheet: 'MASTER DATA PASIEN',
+        row: row
+      })
+    });
+    toast('✓ ' + data.nama + ' disimpan! Cek Sheets dalam beberapa detik.');
+    setSyncInfo('✓ Tersimpan ' + new Date().toLocaleTimeString('id-ID'));
+  } catch(err){
+    toast('⚠️ Gagal koneksi ke Sheets — data tersimpan lokal');
+    setSyncInfo('⚠️ Offline');
+    console.error('Sheets POST error:', err);
+  }
+  resetForm();
+}
+
+function resetForm(){
+  ['pt-nama','pt-member','pt-hp','pt-treatment','pt-spend','pt-mgm','pt-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['pt-sumber','pt-masalah','pt-loyalty','pt-fu-type'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const tgl=document.getElementById('pt-tgl'); if(tgl) tgl.value=todayStr();
+  const lahir=document.getElementById('pt-lahir'); if(lahir) lahir.value='';
+}
+
+function renderTodayTable(){
+  const tbody=document.getElementById('today-tbody'); if(!tbody) return;
+  const cnt=document.getElementById('today-count'); if(cnt) cnt.textContent=todayPatients.length;
+  tbody.innerHTML=todayPatients.map((p,i)=>`<tr>
+    <td>${p.waktu}</td><td><strong>${p.nama}</strong></td><td>${p.hp}</td>
+    <td><span class="badge b-blue">${p.sumber||'-'}</span></td>
+    <td>${p.treatment||'-'}</td><td>Rp ${parseInt(p.spend||0).toLocaleString('id-ID')}</td>
+    <td><span class="badge b-${lbadge(p.loyalty)}">${p.loyalty||'-'}</span></td>
+    <td style="font-size:10px">${p.fuSched||'-'}</td>
+    <td><button onclick="delTodayPatient(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td>
+  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:16px">Belum ada pasien hari ini</td></tr>';
+}
+
+function delTodayPatient(i){
+  captureSnapshot('hapus pasien hari ini');
+  todayPatients.splice(i,1);
+  localStorage.setItem('ellis_today_'+todayKey(), JSON.stringify(todayPatients));
+  renderTodayTable();
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// SYNC FROM SHEETS
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// SYNC — Kolom MASTER DATA PASIEN dari Google Sheets (verified):
+// 0=NO MEMBER  1=NAMA        2=NO.HP       3=TANGGAL LAHIR  4=UMUR
+// 5=SUMBER     6=INSTAGRAM   7=MASALAH UTAMA 8=MASALAH KEDUA
+// 9=TERAKHIR DATANG  10=TOTAL VISIT  11=TOTAL SPEND
+// 12=FU H+3    13=STATUS H+3  14=FU H+21  15=STATUS H+21
+// 16=LOYALTY   17=STAMP      18=REWARD 4   19=REWARD 10
+// 20=REFERAL   21=REVIEW     22=WA GRUP    23=BIRTHDAY FU
+// 24=NOTES     25=BEFORE AFTER
+// Data row mulai slice(3) — skip 2 header baris + 1 title baris
+// ═══════════════════════════════════════════════════════
+
+async function syncAll(){ await syncMaster(); toast('✓ Load selesai'); }
+
+// ═══════════════════════════════════════════════════════
+// SYNC SEMUA KE SHEETS — 1 tombol untuk semua section
+// ═══════════════════════════════════════════════════════
+async function syncSemuaKeSheets(){
+  const btn = document.getElementById('btn-sync-sheets');
+  if(btn){ btn.textContent='⏳ Menyimpan...'; btn.disabled=true; btn.style.opacity='.6'; }
+
+  const results = [];
+
+  // 1. Loyalty — stempel & tier
+  try {
+    const loyaltyRows = document.querySelectorAll('#loyalty-tbody tr');
+    let loyaltyCount = 0;
+    for(const tr of loyaltyRows){
+      const memberId = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!memberId || memberId==='-') continue;
+      const rowIdx = masterData.findIndex(r=>String(r[0]).trim()===memberId);
+      if(rowIdx<0) continue;
+      const stamp = parseInt(tr.querySelectorAll('td')[4]?.innerText)||0;
+      const tierEl = tr.querySelector('td:nth-child(4) .badge');
+      const tier = tierEl?.innerText?.toLowerCase()||'';
+      const klaim4 = tr.querySelector('td:nth-child(8) .badge')?.innerText?.includes('Sudah');
+      const klaim10 = tr.querySelector('td:nth-child(9) .badge')?.innerText?.includes('Sudah');
+      const sheetRow = rowIdx + 1;
+      const ps = [];
+      if(tier) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier}));
+      if(stamp>=0) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp}));
+      if(klaim4) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'}));
+      if(klaim10) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'}));
+      await Promise.all(ps);
+      loyaltyCount++;
+    }
+    if(loyaltyCount>0) results.push('💳 Loyalty: '+loyaltyCount+' member');
+  } catch(e){ results.push('⚠️ Loyalty gagal'); console.error(e); }
+
+  // 2. Follow Up — status H+3 & H+21
+  try {
+    const fuRows = document.querySelectorAll('#fu-tbody tr');
+    let fuCount = 0;
+    for(const tr of fuRows){
+      const nama = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!nama) continue;
+      const rowIdx = masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===nama.toLowerCase());
+      if(rowIdx<0) continue;
+      const stH3 = tr.querySelector('td:nth-child(6) .badge')?.innerText?.trim()||'';
+      const stH21 = tr.querySelector('td:nth-child(8) .badge')?.innerText?.trim()||'';
+      const ps = [];
+      if(stH3 && stH3 !== String(masterData[rowIdx][13]||'').trim()){
+        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:stH3}));
+        masterData[rowIdx][13] = stH3;
+      }
+      if(stH21 && stH21 !== String(masterData[rowIdx][15]||'').trim()){
+        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:stH21}));
+        masterData[rowIdx][15] = stH21;
+      }
+      if(ps.length){ await Promise.all(ps); fuCount++; }
+    }
+    if(fuCount>0) results.push('📞 Follow Up: '+fuCount+' pasien');
+  } catch(e){ results.push('⚠️ FU gagal'); console.error(e); }
+
+  // 3. Master Pasien — notes/catatan (kolom 25)
+  try {
+    const masterRows = document.querySelectorAll('#master-tbody tr');
+    let notesCount = 0;
+    for(const tr of masterRows){
+      const memberId = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!memberId || memberId==='-') continue;
+      const rowIdx = masterData.findIndex(r=>String(r[0]).trim()===memberId);
+      if(rowIdx<0) continue;
+      const notes = tr.querySelectorAll('td')[12]?.innerText?.trim()||'';
+      const curr = String(masterData[rowIdx][24]||'').trim();
+      if(notes !== curr){
+        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:25,value:notes});
+        masterData[rowIdx][24] = notes;
+        notesCount++;
+      }
+    }
+    if(notesCount>0) results.push('📋 Notes: '+notesCount+' baris');
+  } catch(e){ results.push('⚠️ Notes gagal'); console.error(e); }
+
+  // 4. MGM — update referal count pasien yang bawa
+  try {
+    const mgmRows = document.querySelectorAll('#mgm-tbody tr');
+    let mgmCount = 0;
+    const processed = new Set();
+    for(const tr of mgmRows){
+      if(tr.style.display==='none') continue;
+      const pasienBawa = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!pasienBawa || processed.has(pasienBawa)) continue;
+      processed.add(pasienBawa);
+      if(masterData.length){
+        const rowIdx = masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===pasienBawa.toLowerCase());
+        if(rowIdx>=0){
+          // Hitung berapa kali pasien ini bawa teman
+          const count = Array.from(mgmRows).filter(r=>r.querySelectorAll('td')[0]?.innerText?.trim()===pasienBawa).length;
+          await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:count});
+          masterData[rowIdx][20] = count;
+          mgmCount++;
+        }
+      }
+    }
+    if(mgmCount>0) results.push('👥 MGM: '+mgmCount+' pasien diupdate');
+  } catch(e){ results.push('⚠️ MGM gagal'); console.error(e); }
+
+  // Tampilkan hasil
+  if(btn){ btn.textContent='☁️ Sync Sheets'; btn.disabled=false; btn.style.opacity='1'; }
+
+  if(results.length===0){
+    toast('ℹ️ Tidak ada perubahan yang perlu disync ke Sheets');
+    setSyncInfo('✓ Tidak ada perubahan');
+  } else {
+    const msg = '✓ Tersimpan ke Sheets: '+results.join(' · ');
+    toast(msg);
+    setSyncInfo('✓ Sync '+new Date().toLocaleTimeString('id-ID'));
+  }
+}
+
+// Helper: POST ke Sheets dengan no-cors
+async function testKoneksiSheets(){
+  toast('⏳ Testing koneksi ke Apps Script...');
+  setSyncInfo('⏳ Testing...');
+  try {
+    SHEETS_URL = getActiveURL(); const url = SHEETS_URL + '?sheet=master';
+    const res = await fetch(url, {method:'GET', redirect:'follow'});
+    const text = await res.text();
+    console.log('Test response status:', res.status);
+    console.log('Test response (first 300):', text.substring(0,300));
+    if(text.startsWith('{') || text.startsWith('[')){
+      const json = JSON.parse(text);
+      if(json.status === 'ok'){
+        toast('✅ Koneksi OK! '+json.data?.length+' baris data ditemukan. Sekarang klik Load Sheets.');
+        setSyncInfo('✅ Koneksi Apps Script OK');
+      } else {
+        toast('⚠️ Respon tidak ok: '+JSON.stringify(json).substring(0,100));
+      }
+    } else if(text.includes('<!DOCTYPE') || text.includes('<html')){
+      toast('⚠️ Apps Script redirect ke halaman login Google — perlu set deploy ke "Anyone"');
+      setSyncInfo('⚠️ Perlu login Google');
+    } else {
+      toast('⚠️ Response tidak terduga: '+text.substring(0,80));
+    }
+  } catch(e){
+    toast('❌ Tidak bisa connect: '+e.message);
+    setSyncInfo('❌ Koneksi gagal');
+    console.error('Test koneksi error:', e);
+  }
+}
+
+async function postToSheets(payload){
+  return fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(payload)
+  });
+}
+
+async function syncMaster(){
+  setSyncInfo('⏳ Loading...');
+  const loadEl=document.getElementById('master-loading');
+  if(loadEl) loadEl.style.display='block';
+  
+  const url = getActiveURL() + '?sheet=master';
+  let ok = false;
+
+  // Coba fetch dulu (jalan kalau ada CORS header / localhost)
+  try {
+    const res = await fetch(url, {signal: AbortSignal.timeout(8000)});
+    const json = await res.json();
+    if(json.status==='ok'){ processMasterData(json.data||[]); ok=true; }
+  } catch(e){ console.log('fetch gagal, coba JSONP...', e.message); }
+
+  // Fallback JSONP — jalan dari file:// dan GitHub Pages
+  if(!ok){
+    try {
+      await new Promise((res,rej)=>{
+        const fn='_cb'+Date.now();
+        const s=document.createElement('script');
+        let done=false;
+        window[fn]=(d)=>{
+          done=true; delete window[fn];
+          s.parentNode&&s.parentNode.removeChild(s);
+          if(d&&d.status==='ok'){processMasterData(d.data||[]);ok=true;}
+          res();
+        };
+        s.onerror=()=>{ delete window[fn]; s.parentNode&&s.parentNode.removeChild(s); rej(new Error('JSONP error')); };
+        s.src=url+'&callback='+fn;
+        document.head.appendChild(s);
+        setTimeout(()=>{ if(!done){delete window[fn];s.parentNode&&s.parentNode.removeChild(s);rej(new Error('Timeout'));}},12000);
+      });
+    } catch(e){ console.error('JSONP gagal:', e.message); }
+  }
+
+  if(!ok){
+    setSyncInfo('⚠️ Gagal');
+    toast('⚠️ Tidak bisa load. Pastikan internet aktif dan Apps Script sudah di-deploy terbaru.');
+  }
+  if(loadEl) loadEl.style.display='none';
+}
+
+function processMasterData(data){
+  masterData = data;
+  const valid = masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA');
+  const sbTotal=document.getElementById('sb-total'); if(sbTotal) sbTotal.textContent=valid.length;
+  const today=new Date();
+  const mpActive=document.getElementById('mp-active'); if(mpActive) mpActive.textContent=valid.filter(r=>{const d=parseDate(r[9]);return d&&(today-d)/86400000<=30;}).length;
+  const mpInactive=document.getElementById('mp-inactive'); if(mpInactive) mpInactive.textContent=valid.filter(r=>{const d=parseDate(r[9]);return !d||(today-d)/86400000>=90;}).length;
+  const mpNew=document.getElementById('mp-new'); if(mpNew) mpNew.textContent=valid.filter(r=>{const d=parseDate(r[9]);return d&&d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();}).length;
+  renderMasterTable();
+  setSyncInfo('✓ '+valid.length+' pasien — '+new Date().toLocaleTimeString('id-ID'));
+  toast('✓ '+valid.length+' pasien berhasil dimuat!');
+  setTimeout(()=>syncBirthday(),500);
+}
+
+function showManualLoadOption(url){
+  const existing = document.getElementById('manual-load-modal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'manual-load-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML='<div style="background:white;border-radius:14px;padding:20px;max-width:500px;width:100%">'+
+    '<div style="font-weight:700;font-size:15px;margin-bottom:8px">⚠️ Tidak bisa load otomatis</div>'+
+    '<div style="font-size:12px;color:#555;line-height:1.7;margin-bottom:10px">'+
+    'Klik link di bawah → copy semua teks yang muncul (Ctrl+A, Ctrl+C) → paste di kotak ini:</div>'+
+    '<a href="'+url+'" target="_blank" style="display:block;font-size:10px;background:#f5f5f5;padding:8px;border-radius:6px;word-break:break-all;color:#2980B9;margin-bottom:10px">'+url+'</a>'+
+    '<textarea id="manual-json-input" style="width:100%;height:100px;font-size:10px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:vertical;box-sizing:border-box" placeholder=\'Paste JSON di sini... {"status":"ok","data":[...]}\' ></textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+    '<button onclick="loadManualJSON()" style="background:#D4A017;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif">✓ Load Data</button>'+
+    '<button onclick="document.getElementById(\'manual-load-modal\').remove()" style="background:#f0f0f0;border:none;padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif">Tutup</button>'+
+    '</div></div>';
+  document.body.appendChild(modal);
+}
+
+function loadManualJSON(){
+  const txt=(document.getElementById('manual-json-input')?.value||'').trim();
+  if(!txt){toast('⚠️ Paste JSON dulu');return;}
+  try{
+    const json=JSON.parse(txt);
+    if(json.status==='ok'&&json.data){ processMasterData(json.data); document.getElementById('manual-load-modal')?.remove(); }
+    else toast('⚠️ JSON tidak valid');
+  }catch(e){toast('⚠️ Bukan JSON: '+e.message);}
+}
+
+async function syncInactive(){
+  if(!masterData.length) await syncMaster();
+  const today=new Date();
+  inactiveData=masterData.slice(3).filter(r=>r[1]&&r[9]).map(r=>{
+    const last=parseDate(r[9]);
+    const days=last?Math.floor((today-last)/86400000):999;
+    return {...r,_days:days,_last:last};
+  }).filter(r=>r._days>=30).sort((a,b)=>b._days-a._days);
+  const in30=inactiveData.filter(r=>r._days>=30&&r._days<60).length;
+  const in60=inactiveData.filter(r=>r._days>=60&&r._days<90).length;
+  const in90=inactiveData.filter(r=>r._days>=90).length;
+  const el30=document.getElementById('in-30'); if(el30) el30.textContent=in30;
+  const el60=document.getElementById('in-60'); if(el60) el60.textContent=in60;
+  const el90=document.getElementById('in-90'); if(el90) el90.textContent=in90;
+  document.getElementById('sb-inactive').textContent=inactiveData.length;
+  filterInactive();
+  setSyncInfo('✓ Inactive dimuat: '+inactiveData.length);
+}
+
+function filterInactive(){
+  const f=document.getElementById('inactive-filter')?.value||'all';
+  let data=inactiveData;
+  if(f==='30') data=inactiveData.filter(r=>r._days>=30&&r._days<60);
+  else if(f==='60') data=inactiveData.filter(r=>r._days>=60&&r._days<90);
+  else if(f==='90') data=inactiveData.filter(r=>r._days>=90);
+  const tbody=document.getElementById('inactive-tbody'); if(!tbody) return;
+  tbody.innerHTML=data.slice(0,150).map(r=>`<tr>
+    <td><strong>${r[1]}</strong></td>
+    <td style="font-size:10px">${r[2]||'-'}</td>
+    <td>${fmtDate(r[9])}</td>
+    <td><span class="badge b-${r._days>=90?'red':r._days>=60?'orange':'gold'}">${r._days} hari</span></td>
+    <td style="font-size:10px">${(r[7]||'-').toString().substring(0,40)}</td>
+    <td contenteditable style="font-size:10px">${r[13]||'Belum'}</td>
+    <td contenteditable style="font-size:10px">${r[24]||'-'}</td>
+    <td><span class="badge b-gray" onclick="toggleDatangStatus(this)" style="cursor:pointer">Belum</span></td>
+    <td><a href="https://wa.me/62${waNum(r[2])}?text=${waText(r[1],'inactive')}" target="_blank" style="background:var(--green);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 WA</a></td>
+  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada data</td></tr>';
+}
+
+async function syncBirthday(){
+  if(!masterData.length) await syncMaster();
+  const sel=document.getElementById('bday-month-sel'); if(!sel) return;
+  const targetMonth=parseInt(sel.value);
+  // r[3]=TANGGAL LAHIR, r[1]=NAMA, r[2]=HP, r[16]=LOYALTY, r[9]=TERAKHIR DATANG
+  bdayData=masterData.slice(3).filter(r=>{
+    if(!r[1]||String(r[1]).trim()===''||String(r[1]).trim()==='NAMA') return false;
+    if(!r[3]||String(r[3]).trim()===''||isNaN(Number(r[3])?.toString()?.replace(/\//g,''))) {
+      // Try parse tanggal lahir
+    }
+    const d=parseDate(r[3]); return d&&!isNaN(d)&&d.getMonth()===targetMonth;
+  }).map(r=>({...r,_bday:parseDate(r[3])})).filter(r=>r._bday&&!isNaN(r._bday))
+    .sort((a,b)=>a._bday.getDate()-b._bday.getDate());
+  const bdTotal=document.getElementById('bd-total'); if(bdTotal) bdTotal.textContent=bdayData.length;
+  document.getElementById('sb-bday').textContent=bdayData.filter(r=>r._bday&&r._bday.getMonth()===new Date().getMonth()).length;
+  const todayD=new Date();
+  const todayBday=bdayData.filter(r=>r._bday&&r._bday.getDate()===todayD.getDate()&&targetMonth===todayD.getMonth());
+  const alertEl=document.getElementById('bday-today-alert');
+  if(alertEl) alertEl.style.display=todayBday.length?'block':'none';
+  renderBdayTable();
+  setSyncInfo('✓ Birthday: '+bdayData.length+' pasien');
+}
+
+function filterBirthday(){ syncBirthday(); }
+
+function renderBdayTable(){
+  const today=new Date();
+  let fuCount=0, datangCount=0;
+  const tbody=document.getElementById('bday-tbody'); if(!tbody) return;
+  tbody.innerHTML=bdayData.map(r=>{
+    const isToday=r._bday.getDate()===today.getDate()&&r._bday.getMonth()===today.getMonth();
+    // r[23]=BIRTHDAY FU status
+    const fuDone=r[23]&&r[23].toLowerCase().includes('sudah');
+    if(fuDone) fuCount++;
+    const ageNow=today.getFullYear()-r._bday.getFullYear();
+    return `<tr${isToday?' style="background:#FFF0F0"':''}>
+      <td><strong>${isToday?'🎂 ':''} ${r._bday.getDate()} ${MONTHS[r._bday.getMonth()]}</strong></td>
+      <td><strong>${r[1]}</strong></td>
+      <td style="font-size:10px">${r[2]||'-'}</td>
+      <td><span class="badge b-${lbadge(r[16])}">${r[16]||'-'}</span></td>
+      <td contenteditable>Reward ulang tahun spesial</td>
+      <td><span class="badge b-${fuDone?'green':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${fuDone?'Sudah':'Belum'}</span></td>
+      <td contenteditable>${fuDone?todayStr():'-'}</td>
+      <td><span class="badge b-gray" onclick="toggleDatangStatus(this)" style="cursor:pointer">Belum</span></td>
+      <td><a href="https://wa.me/62${waNum(r[2])}?text=${waText(r[1],'birthday')}" target="_blank" style="background:#25D366;color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">🎂 WA</a></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada birthday bulan ini</td></tr>';
+  const bdFU=document.getElementById('bd-fu'); if(bdFU) bdFU.textContent=fuCount;
+  const bdToday=document.getElementById('bd-today'); if(bdToday) bdToday.textContent=bdayData.filter(r=>r._bday.getDate()===today.getDate()&&r._bday.getMonth()===today.getMonth()).length;
+}
+
+async function syncFU(){
+  if(!masterData.length) await syncMaster();
+  const today=new Date();
+  fuData=masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA'&&r[9]).map(r=>{
+    const lastVisit=parseDate(r[9]);
+    if(!lastVisit) return null;
+    const d3=new Date(lastVisit); d3.setDate(d3.getDate()+3);
+    const d21=new Date(lastVisit); d21.setDate(d21.getDate()+21);
+    // Kolom: 12=FU H+3 date, 13=STATUS H+3, 14=FU H+21 date, 15=STATUS H+21
+    return {
+      nama:r[1], hp:r[2],
+      treatment:(r[7]||'-').toString().substring(0,40),
+      tglTreatment:fmtDate(r[9]),
+      fuH3:r[12]||d3.toISOString().slice(0,10),
+      fuH21:r[14]||d21.toISOString().slice(0,10),
+      fuStatus:r[13]||'Belum',
+      fuStatus21:r[15]||'Belum',
+      fuLast:r[12]||'-',
+      balik:'Belum',
+      loyalty:r[16]||'',
+      stamp:r[17]||'0'
+    };
+  }).filter(Boolean);
+  document.getElementById('fu-total').textContent=fuData.length;
+  document.getElementById('fu-done').textContent=fuData.filter(r=>r.fuStatus==='Sudah').length;
+  document.getElementById('fu-pending').textContent=fuData.filter(r=>r.fuStatus!=='Sudah').length;
+  document.getElementById('fu-balik').textContent=fuData.filter(r=>r.balik==='Sudah').length;
+  document.getElementById('sb-fu').textContent=fuData.filter(r=>r.fuStatus!=='Sudah').length;
+  filterFU();
+}
+
+function filterFU(){
+  const f=document.getElementById('fu-filter')?.value||'all';
+  const todayS=todayStr();
+  let data=fuData;
+  if(f==='h3') data=fuData.filter(r=>r.fuH3<=todayS);
+  else if(f==='h21') data=fuData.filter(r=>r.fuH21<=todayS);
+  else if(f==='biweekly') data=fuData; // all for now
+  else if(f==='pending') data=fuData.filter(r=>r.fuStatus!=='Sudah');
+  else if(f==='done') data=fuData.filter(r=>r.fuStatus==='Sudah');
+  const tbody=document.getElementById('fu-tbody'); if(!tbody) return;
+  tbody.innerHTML=data.slice(0,100).map(r=>`<tr>
+    <td><strong>${r.nama}</strong></td><td style="font-size:10px">${r.hp}</td>
+    <td style="font-size:10px">${r.treatment}</td><td style="font-size:10px">${r.tglTreatment}</td>
+    <td style="font-size:10px">${r.fuH3}</td>
+    <td><span class="badge b-${r.fuStatus==='sudah'||r.fuStatus==='Sudah'?'green':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus||'Belum'}</span></td>
+    <td style="font-size:10px">${r.fuH21}</td>
+    <td><span class="badge b-${r.fuStatus21==='sudah'||r.fuStatus21==='Sudah'?'green':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus21||'Belum'}</span></td>
+    <td><a href="https://wa.me/62${waNum(r.hp)}?text=${waText(r.nama,'h3')}" target="_blank" style="background:var(--green);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 WA</a></td>
+  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada data</td></tr>';
+}
+
+async function syncLoyalty(){
+  if(!masterData.length) await syncMaster();
+  loyaltyData=masterData.slice(3).filter(r=>r[1]&&r[16]&&r[16].toString().trim()&&r[16]!=='-');
+  document.getElementById('ct-bronze').textContent=loyaltyData.filter(r=>(r[16]||'').toLowerCase().includes('bronze')).length;
+  document.getElementById('ct-silver').textContent=loyaltyData.filter(r=>(r[16]||'').toLowerCase().includes('silver')).length;
+  document.getElementById('ct-gold').textContent=loyaltyData.filter(r=>(r[16]||'').toLowerCase().includes('gold')).length;
+  renderLoyaltyTable();
+}
+
+function filterLoyalty(){
+  const q=(document.getElementById('srch-loyalty')?.value||'').toLowerCase();
+  const t=(document.getElementById('fltr-tier')?.value||'').toLowerCase();
+  const filtered=loyaltyData.filter(r=>{
+    const n=(r[1]||'').toString().toLowerCase();
+    const tier=(r[16]||'').toString().toLowerCase();
+    return n.includes(q)&&(t===''||tier.includes(t));
+  });
+  renderLoyaltyTableData(filtered);
+}
+
+function renderLoyaltyTable(){ filterLoyalty(); }
+
+function renderLoyaltyTableData(data){
+  const tbody=document.getElementById('loyalty-tbody'); if(!tbody) return;
+  tbody.innerHTML=data.slice(0,200).map(r=>{
+    const tier=(r[16]||'').toString().trim().toLowerCase();
+    const stamp=parseInt(r[17])||0;
+    // Hitung kartu ke berapa: stamp > 10 berarti sudah pernah full
+    // Kita simpan cardNum di data sendiri jika ada, atau hitung dari stamp history
+    const cardNum=parseInt(r._cardNum||1);
+    const kardLabel=cardNum>1?`<span style="font-size:9px;background:rgba(212,160,23,.2);padding:1px 5px;border-radius:5px;margin-left:3px">Kartu #${cardNum}</span>`:'';
+    const stamps=Array.from({length:10},(_,i)=>`<div style="width:18px;height:18px;border-radius:50%;background:${i<stamp?(i===3||i===9?'#FFD700':'var(--gold)'):'var(--gray-l)'};font-size:8px;display:flex;align-items:center;justify-content:center;color:${i<stamp?'#1E1A0F':'var(--gray)'};border:${i===3||i===9?'2px solid #FFD700':'1px solid rgba(0,0,0,.1)'};font-weight:700">${i<stamp?(i===3||i===9?'🎁':'✓'):''}</div>`).join('');
+    const klaim4=r[18]&&String(r[18]).trim()&&String(r[18]).trim()!=='-';
+    const klaim10=r[20]&&String(r[20]).trim()&&String(r[20]).trim()!=='-';
+    return `<tr>
+      <td style="font-size:10px">${r[0]||'-'}</td>
+      <td><strong>${r[1]}</strong>${kardLabel}</td>
+      <td style="font-size:10px">${r[2]||'-'}</td>
+      <td><span class="badge b-${lbadge(tier)}">${tier?tier.toUpperCase():'-'}</span></td>
+      <td><strong>${stamp}/10</strong></td>
+      <td style="font-size:10px;color:var(--gray)">${cardNum > 1 ? `<span style="color:var(--gold-d);font-weight:700">Kartu ke-${cardNum}</span>` : 'Kartu ke-1'}</td>
+      <td><div style="display:flex;gap:2px;flex-wrap:wrap">${stamps}</div></td>
+      <td><span class="badge b-${klaim4?'green':'gold'}" onclick="toggleKlaim(this)" style="cursor:pointer">${klaim4?'✓ Sudah':'Belum'}</span></td>
+      <td><span class="badge b-${klaim10?'green':'gold'}" onclick="toggleKlaim(this)" style="cursor:pointer">${klaim10?'✓ Sudah':'Belum'}</span></td>
+      <td style="white-space:nowrap">
+        <button onclick="addStampV4(this,'${r[0]}',${stamp},${cardNum})" style="background:var(--gold);color:white;border:none;padding:3px 9px;border-radius:5px;font-size:11px;cursor:pointer;font-weight:700">+1 Stempel</button>
+        <select onchange="updateTierV4(this,'${r[0]}')" style="font-size:10px;border:1px solid var(--gray-l);border-radius:5px;padding:3px 5px;margin-left:4px;background:var(--gold-p)">
+          <option value="">Ganti Tier</option><option value="bronze">Bronze</option><option value="silver">Silver</option><option value="gold">Gold</option>
+        </select>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:16px">Klik "Load Sheets"</td></tr>';
+}
+
+async function addStampV4(btn, memberId, currentStamp, currentCardNum){
+  captureSnapshot('tambah stempel');
+  let newStamp=currentStamp+1;
+  let newCard=currentCardNum||1;
+  if(currentStamp>=10){
+    // Kartu baru!
+    newStamp=1;
+    newCard=(currentCardNum||1)+1;
+    toast(`🎉 Kartu ke-${currentCardNum||1} penuh! Mulai kartu ke-${newCard} — stempel 1/10`);
+  } else if(newStamp===4){
+    toast('🎁 Stempel ke-4 tercapai! Reward bisa diklaim sekarang.');
+  } else if(newStamp===10){
+    toast('🎁 Stempel ke-10 penuh! Klaim reward, lalu kartu baru dimulai.');
+  } else {
+    toast(`✓ Stempel ${newStamp}/10 — Kartu ke-${newCard}`);
+  }
+  try {
+    const rowIdx=masterData.findIndex(r=>r[0]===memberId);
+    if(rowIdx>=0){
+      masterData[rowIdx][17]=newStamp;
+      masterData[rowIdx]._cardNum=newCard;
+      await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:18,value:newStamp});
+    }
+  } catch(e){ console.warn('Sheets update failed, saved locally'); }
+  syncLoyalty();
+}
+
+async function updateTierV4(sel, memberId){
+  const tier=sel.value; if(!tier) return;
+  captureSnapshot('update tier');
+  try {
+    const rowIdx=masterData.findIndex(r=>r[0]===memberId);
+    if(rowIdx>=0){
+      await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:17,value:tier});
+      masterData[rowIdx][16]=tier; syncLoyalty(); toast(`✓ Tier → ${tier}`);
+    }
+  } catch(e){ toast('⚠️ Gagal update'); }
+  sel.value='';
+}
+
+// ═══════════════════════════════════════════════════════
+// SIMPAN KE SHEETS — Loyalty, Master, FU, MGM
+// Apps Script support: append, update, update_cell
+// ═══════════════════════════════════════════════════════
+
+// ── LOYALTY: simpan semua perubahan stempel & tier ke Sheets ──
+async function saveAllLoyaltyToSheets(){
+  if(!masterData.length){ toast('⚠️ Load Sheets dulu sebelum simpan'); return; }
+  const rows = document.querySelectorAll('#loyalty-tbody tr');
+  if(!rows.length){ toast('⚠️ Tidak ada data loyalty'); return; }
+
+  setSyncInfo('⏳ Menyimpan loyalty...');
+  toast('⏳ Menyimpan perubahan loyalty ke Sheets...');
+
+  let success=0, fail=0;
+  for(const tr of rows){
+    const memberId = tr.querySelectorAll('td')[0]?.innerText?.trim();
+    if(!memberId||memberId==='-') continue;
+    const rowIdx = masterData.findIndex(r=>String(r[0]).trim()===memberId);
+    if(rowIdx<0) continue;
+
+    // Ambil nilai stempel dari kolom ke-4 (index 4 = "Stempel")
+    const stampCell = tr.querySelectorAll('td')[4];
+    const stampText = stampCell?.innerText||'';
+    const stamp = parseInt(stampText)||0;
+
+    // Ambil tier dari badge di kolom ke-3
+    const tierBadge = tr.querySelector('td:nth-child(4) .badge');
+    const tier = tierBadge?.innerText?.toLowerCase()||'';
+
+    // Ambil status klaim ke-4 (kolom 7) dan klaim ke-10 (kolom 8)
+    const klaim4El = tr.querySelector('td:nth-child(8) .badge');
+    const klaim10El = tr.querySelector('td:nth-child(9) .badge');
+    const klaim4 = klaim4El?.innerText?.includes('Sudah') ? 'sudah' : '';
+    const klaim10 = klaim10El?.innerText?.includes('Sudah') ? 'sudah' : '';
+
+    try {
+      const sheetRow = rowIdx + 1; // +1 karena Sheets 1-indexed
+      // Update: col 17=LOYALTY(index 16), col 18=STAMP(index 17), col 19=REWARD4(index 18), col 21=REWARD10(index 20)
+      const promises = [];
+      if(tier) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier})}));
+      if(stamp) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp})}));
+      if(klaim4) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'})}));
+      if(klaim10) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'})}));
+      await Promise.all(promises);
+      success++;
+    } catch(e){ fail++; }
+  }
+  setSyncInfo(`✓ Loyalty tersimpan: ${success} member`);
+  toast(fail>0 ? `✓ ${success} tersimpan, ${fail} gagal` : `✓ ${success} member loyalty tersimpan ke Sheets!`);
+}
+
+// ── MASTER PASIEN: simpan perubahan Notes (kolom 24) ──
+async function saveMasterEditsToSheets(){
+  if(!masterData.length){ toast('⚠️ Load Sheets dulu sebelum simpan'); return; }
+  const rows = document.querySelectorAll('#master-tbody tr');
+  if(!rows.length){ toast('⚠️ Tidak ada data master'); return; }
+
+  setSyncInfo('⏳ Menyimpan catatan...');
+  toast('⏳ Menyimpan perubahan ke Sheets...');
+  let success=0, fail=0;
+
+  for(const tr of rows){
+    const memberId = tr.querySelectorAll('td')[0]?.innerText?.trim();
+    if(!memberId||memberId==='-') continue;
+    const rowIdx = masterData.findIndex(r=>String(r[0]).trim()===memberId);
+    if(rowIdx<0) continue;
+
+    // Notes ada di kolom terakhir (kolom ke-13, index 12 dari td)
+    const notesCell = tr.querySelectorAll('td')[12];
+    const notes = notesCell?.innerText?.trim()||'';
+    const currentNotes = String(masterData[rowIdx][24]||'').trim();
+
+    // Hanya simpan kalau ada perubahan
+    if(notes===currentNotes) continue;
+
+    try {
+      await postToSheets({
+        action:'update_cell',
+        sheet:'MASTER DATA PASIEN',
+        rowIndex:rowIdx+1,
+        colIndex:25,
+        value:notes
+      });
+      masterData[rowIdx][24]=notes;
+      success++;
+    } catch(e){ fail++; }
+  }
+  setSyncInfo(`✓ Catatan tersimpan: ${success} baris`);
+  if(success===0&&fail===0) toast('ℹ️ Tidak ada perubahan catatan yang perlu disimpan');
+  else toast(fail>0?`✓ ${success} tersimpan, ${fail} gagal`:`✓ ${success} catatan tersimpan ke Sheets!`);
+}
+
+// ── FOLLOW UP: simpan perubahan Status H+3 & H+21 ──
+async function saveFUStatusToSheets(){
+  if(!masterData.length){ toast('⚠️ Load Sheets dulu sebelum simpan'); return; }
+  const rows = document.querySelectorAll('#fu-tbody tr');
+  if(!rows.length){ toast('⚠️ Tidak ada data follow up'); return; }
+
+  setSyncInfo('⏳ Menyimpan status FU...');
+  toast('⏳ Menyimpan status FU ke Sheets...');
+  let success=0, fail=0;
+
+  for(const tr of rows){
+    const nama = tr.querySelectorAll('td')[0]?.innerText?.trim();
+    if(!nama) continue;
+    const rowIdx = masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===nama.toLowerCase());
+    if(rowIdx<0) continue;
+
+    // Status H+3 = kolom 5 (index 4 dari td), Status H+21 = kolom 7 (index 6)
+    const statusH3El = tr.querySelector('td:nth-child(6) .badge');
+    const statusH21El = tr.querySelector('td:nth-child(8) .badge');
+    const statusH3 = statusH3El?.innerText?.trim()||'';
+    const statusH21 = statusH21El?.innerText?.trim()||'';
+
+    const currH3 = String(masterData[rowIdx][13]||'').trim();
+    const currH21 = String(masterData[rowIdx][15]||'').trim();
+
+    try {
+      const promises=[];
+      if(statusH3&&statusH3!==currH3){
+        promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:statusH3})}));
+        masterData[rowIdx][13]=statusH3;
+      }
+      if(statusH21&&statusH21!==currH21){
+        promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:statusH21})}));
+        masterData[rowIdx][15]=statusH21;
+      }
+      if(promises.length){ await Promise.all(promises); success++; }
+    } catch(e){ fail++; }
+  }
+  setSyncInfo(`✓ Status FU tersimpan: ${success} pasien`);
+  if(success===0&&fail===0) toast('ℹ️ Tidak ada perubahan status FU yang perlu disimpan');
+  else toast(fail>0?`✓ ${success} tersimpan, ${fail} gagal`:`✓ Status FU ${success} pasien tersimpan!`);
+}
+
+// ── MGM: simpan semua baris MGM ke sheet MASTER DATA PASIEN kolom REFERAL ──
+// Karena tidak ada sheet MGM tersendiri, kita append ke sheet baru "MGM"
+// Atau update kolom REFERAL COUNT (kolom 21) di master
+async function saveMGMToSheets(){
+  const rows = Array.from(document.querySelectorAll('#mgm-tbody tr'));
+  if(!rows.length){ toast('⚠️ Belum ada data MGM'); return; }
+
+  setSyncInfo('⏳ Menyimpan data MGM...');
+  toast('⏳ Menyimpan MGM ke Sheets...');
+
+  let success=0, fail=0;
+  for(const tr of rows){
+    if(tr.style.display==='none') continue;
+    const cells = tr.querySelectorAll('td');
+    const pasienBawa = cells[0]?.innerText?.trim()||'';
+    const temanDibawa = cells[1]?.innerText?.trim()||'';
+    const tglKunjungan = cells[2]?.innerText?.trim()||'';
+    const treatment = cells[3]?.innerText?.trim()||'';
+    const reward = cells[4]?.innerText?.trim()||'';
+    const status = cells[5]?.innerText?.trim()||'';
+    if(!pasienBawa) continue;
+
+    const mgmRow = [pasienBawa, temanDibawa, tglKunjungan, treatment, reward, status, todayStr()];
+    try {
+      // MGM disimpan lokal saja - referal count diupdate di master
+    } catch(e){}
+
+    // Update REFERAL COUNT (kolom 21, index 20) untuk pasien yang bawa
+    if(masterData.length){
+      const rowIdx=masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===pasienBawa.toLowerCase());
+      if(rowIdx>=0){
+        const cur=parseInt(masterData[rowIdx][20]||0)+1;
+        try{
+          await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:cur});
+          masterData[rowIdx][20]=cur; success++;
+        }catch(e){ fail++; }
+      }
+    }
+  }
+  setSyncInfo(`✓ MGM tersimpan`);
+  toast(success>0?`✓ Referal count diupdate untuk ${success} pasien!`:'✓ Data MGM tersimpan lokal (Sheets diupdate saat ada nama yang cocok)');
+}
+
+async function syncSahabat(){
+  if(!masterData.length) await syncMaster();
+  const members=masterData.slice(3).filter(r=>r[1]&&r[16]&&r[16]!=='-'&&r[16].toString().trim());
+  const tbody=document.getElementById('sahabat-tbody'); if(!tbody) return;
+  tbody.innerHTML=members.map(r=>`<tr>
+    <td><strong>${r[1]}</strong></td><td>${r[2]||'-'}</td>
+    <td><span class="badge b-${lbadge(r[16])}">${(r[16]||'').toUpperCase()}</span></td>
+    <td>${r[10]||'-'}</td>
+    <td><span class="badge b-${r[22]==='ya'?'green':'red'}" onclick="toggleGrupStatus(this)" style="cursor:pointer">${r[22]==='ya'?'Bergabung':'Belum'}</span></td>
+    <td contenteditable>${r[22]==='ya'?todayStr():'-'}</td>
+    <td><a href="https://wa.me/62${waNum(r[2])}?text=${waText(r[1],'sahabat')}" target="_blank" style="background:var(--gold);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 Undang</a></td>
+  </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets"</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER MASTER TABLE
+// ═══════════════════════════════════════════════════════
+function renderMasterTable(){
+  const tbody=document.getElementById('master-tbody'); if(!tbody) return;
+  const rows=masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA');
+  const q=(document.getElementById('srch-pasien')?.value||'').toLowerCase();
+  const lt=(document.getElementById('fltr-loyalty')?.value||'').toLowerCase();
+  const src=(document.getElementById('fltr-sumber')?.value||'').toLowerCase();
+  const filtered=rows.filter(r=>{
+    const n=(r[1]||'').toString().toLowerCase();
+    const l=(r[16]||'').toString().toLowerCase();
+    const s=(r[5]||'').toString().toLowerCase();
+    return n.includes(q)&&(lt===''||l.includes(lt))&&(src===''||s.includes(src));
+  });
+  const mpTotal=document.getElementById('mp-total'); if(mpTotal) mpTotal.textContent=rows.length;
+  tbody.innerHTML=filtered.slice(0,300).map(r=>`<tr>
+    <td style="font-size:10px">${r[0]||'-'}</td>
+    <td><strong>${r[1]}</strong></td>
+    <td style="font-size:10px">${r[2]||'-'}</td>
+    <td style="font-size:10px">${fmtDate(r[3])}</td>
+    <td><span class="badge b-blue" style="font-size:9px">${r[5]&&String(r[5]).trim()&&r[5]!==''?r[5]:'-'}</span></td>
+    <td style="font-size:10px">${(r[7]||'-').toString().substring(0,25)}</td>
+    <td style="font-size:10px">${fmtDate(r[9])}</td>
+    <td style="font-size:10px">${r[10]||'0'} visit</td>
+    <td><span class="badge b-${lbadge(r[16])}">${r[16]||'-'}</span></td>
+    <td style="font-size:10px">${r[17]||'0'}/10</td>
+    <td style="font-size:9px">${fmtDate(r[12])||'-'} / ${fmtDate(r[14])||'-'}</td>
+    <td><span class="badge b-${r[22]==='ya'||r[22]==='Bergabung'?'green':'gray'}" style="font-size:9px">${r[22]||'-'}</span></td>
+    <td style="font-size:10px">${(r[24]||'-').toString().substring(0,30)}</td>
+  </tr>`).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--gray)">Tidak ada data</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════
+// SUMBER PASIEN — MULTI-YEAR
+// ═══════════════════════════════════════════════════════
+function initYearTabs(){
+  const container=document.getElementById('year-tab-btns'); if(!container) return;
+  const thisYear=new Date().getFullYear();
+  const years=[];
+  for(let y=thisYear-1;y<=thisYear+2;y++) years.push(y);
+  // Ensure activeYear is initialized
+  years.forEach(y=>{ if(!srcYearData[y]) srcYearData[y]={}; });
+  container.innerHTML=years.map(y=>`<button class="year-tab-btn${y===activeYear?' active':''}" onclick="switchYear(${y},this)">${y}</button>`).join('');
+  loadYearChart(activeYear);
+}
+
+function switchYear(year, btn){
+  // Save current chart values first
+  saveCurrentYearChart();
+  activeYear=year;
+  document.querySelectorAll('.year-tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  loadYearChart(year);
+  const titleEl=document.getElementById('src-chart-title');
+  if(titleEl) titleEl.textContent='📊 Sumber Pasien '+year;
+}
+
+function saveCurrentYearChart(){
+  if(!srcYearData[activeYear]) srcYearData[activeYear]={};
+  const keys=['ig','tt','th','gm','ref','wa','wi','kol','br','sp','ads'];
+  document.querySelectorAll('#src-chart .src-num').forEach((el,i)=>{
+    if(keys[i]) srcYearData[activeYear][keys[i]]=parseInt(el.innerText)||0;
+  });
+}
+
+function loadYearChart(year){
+  const d=srcYearData[year]||{};
+  const keys=['ig','tt','th','gm','ref','wa','wi','kol','br','sp','ads'];
+  document.querySelectorAll('#src-chart .src-num').forEach((el,i)=>{
+    if(keys[i]) el.textContent=d[keys[i]]||0;
+  });
+  updateChart();
+}
+
+function updateChart(){
+  const fills=['sf-ig','sf-tt','sf-th','sf-gm','sf-ref','sf-wa','sf-wi','sf-kol','sf-br','sf-sp','sf-ads'];
+  const nums=document.querySelectorAll('#src-chart .src-num');
+  const vals=Array.from(nums).map(n=>parseInt(n.innerText)||0);
+  const max=Math.max(...vals,1);
+  fills.forEach((id,i)=>{
+    const el=document.getElementById(id); if(!el) return;
+    const pct=Math.round((vals[i]/max)*100);
+    el.style.width=pct+'%'; el.textContent=vals[i]||'';
+  });
+  // Auto-save year data when chart changes
+  saveCurrentYearChart();
+}
+
+// ═══════════════════════════════════════════════════════
+// ADD ROWS / ELEMENTS
+// ═══════════════════════════════════════════════════════
+function addRow(tbodyId, cells){
+  const tbody=document.getElementById(tbodyId); if(!tbody) return;
+  captureSnapshot('tambah baris');
+  const tr=document.createElement('tr');
+  tr.innerHTML=cells.map(c=>`<td>${c}</td>`).join('');
+  tbody.appendChild(tr); saveAll();
+}
+
+function addMGMRow(){
+  captureSnapshot('tambah MGM');
+  const tbody=document.getElementById('mgm-tbody'); if(!tbody) return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td contenteditable>Nama pasien</td><td contenteditable>Nama teman</td><td contenteditable>${todayStr()}</td><td contenteditable>-</td><td contenteditable>Reward</td><td><span class="badge b-gold" onclick="cycleMGMStatus(this)" style="cursor:pointer">Proses</span></td><td><button onclick="delRowMGM(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button></td>`;
+  tbody.appendChild(tr); updateMGMStats(); saveAll();
+}
+function delRowMGM(btn){
+  captureSnapshot('hapus MGM');
+  btn.closest('tr')?.remove();
+  updateMGMStats(); saveAll();
+}
+function cycleMGMStatus(el){
+  const st=['Proses','Reward Diberikan','Batal'];
+  const bd=['b-gold','b-green','b-red'];
+  const i=st.indexOf(el.textContent);
+  const n=(i+1)%st.length;
+  el.textContent=st[n]; el.className='badge '+bd[n]+' cursor:pointer';
+  updateMGMStats(); saveAll();
+}
+function addMGMRekapRow(){
+  addRow('mgm-rekap-tbody',['<span contenteditable>'+MONTHS[new Date().getMonth()]+' '+new Date().getFullYear()+'</span>','<span contenteditable>0</span>','<span contenteditable>0</span>','<span contenteditable>0</span>','<span contenteditable>0</span>','<span contenteditable>-</span>','<button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>']);
+}
+function updateMGMStats(){
+  const rows=Array.from(document.querySelectorAll('#mgm-tbody tr'));
+  const selMonth=document.getElementById('mgm-stat-month')?.value||'';
+  const selYear=document.getElementById('mgm-stat-year')?.value||'';
+
+  // Filter rows berdasarkan bulan/tahun dari kolom tgl (kolom ke-3, index 2)
+  const filtered=rows.filter(r=>{
+    if(r.style.display==='none') return false;
+    const tgl=(r.querySelectorAll('td')[2]?.innerText||r.querySelectorAll('td')[2]?.textContent||'').trim();
+    const matchYear=!selYear||tgl.includes(selYear);
+    const matchMonth=!selMonth||tgl.includes('-'+selMonth+'-')||tgl.includes('/'+selMonth+'/')||tgl.slice(5,7)===selMonth;
+    return matchYear&&matchMonth;
+  });
+
+  // Hitung pasien unik yang bawa (kolom 0)
+  const uniqueBawa=new Set(filtered.map(r=>(r.querySelectorAll('td')[0]?.innerText||'').trim()).filter(Boolean));
+  // Hitung total teman yang dibawa (kolom 1 — bisa lebih dari 1 per baris, pisah koma)
+  let totalTeman=0;
+  filtered.forEach(r=>{
+    const teman=(r.querySelectorAll('td')[1]?.innerText||'').trim();
+    if(teman) totalTeman+=teman.split(',').filter(s=>s.trim()).length;
+  });
+  // Reward diberikan
+  const reward=filtered.filter(r=>{const s=r.querySelector('.badge');return s&&s.textContent.trim()==='Reward Diberikan';}).length;
+
+  document.getElementById('mgm-bulan').textContent=uniqueBawa.size;
+  document.getElementById('mgm-total').textContent=totalTeman;
+  document.getElementById('mgm-reward').textContent=reward;
+
+  // Update label periode
+  const periodEl=document.getElementById('mgm-stat-period');
+  if(periodEl){
+    if(!selMonth&&!selYear) periodEl.textContent='Semua waktu';
+    else {
+      const bln=['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      periodEl.textContent=(selMonth?bln[parseInt(selMonth)]+' ':'')+selYear;
+    }
+  }
+}
+function filterMGM(){
+  const month=document.getElementById('mgm-month-filter')?.value||'';
+  const year=document.getElementById('mgm-year-filter')?.value||'';
+  Array.from(document.querySelectorAll('#mgm-tbody tr')).forEach(tr=>{
+    const tgl=(tr.querySelectorAll('td')[2]?.innerText||tr.querySelectorAll('td')[2]?.textContent||'').trim();
+    const show=(!month||tgl.includes('-'+month+'-')||tgl.includes('/'+month+'/')||tgl.slice(5,7)===month)&&(!year||tgl.includes(year));
+    tr.style.display=show?'':'none';
+  });
+  updateMGMStats();
+}
+function addBrosurRow(){addRow('brosur-tbody',['<span contenteditable>Tema</span>','<span contenteditable>-</span>','<span contenteditable>500</span>','<span contenteditable>0</span>','<span contenteditable>500</span>','<span contenteditable>0</span>','<span class="badge b-gold">Rencana</span>','<button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>']);}
+function addBBRow(){addRow('bb-tbody',['<span contenteditable>Tipe</span>','<span contenteditable>Ukuran</span>','<span contenteditable>Lokasi</span>','<span contenteditable>-</span>','<span contenteditable>Rp 0</span>','<span contenteditable>0</span>','<span class="badge b-gold">Rencana</span>','<button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>']);}
+function addSrcMonthly(){addRow('src-monthly',['<span contenteditable>Bulan</span>','<span contenteditable>0</span>','<span contenteditable>-</span>','<span contenteditable>-</span>','<span contenteditable>-</span>','<span contenteditable>-</span>','<span contenteditable>-</span>','<button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>']);}
+function addFURow(){addRow('fu-tbody',['<span contenteditable>Nama</span>','<span contenteditable>08xx</span>','<span contenteditable>Treatment</span>',`<span contenteditable>${todayStr()}</span>`,'<span class="badge b-blue">H+3 & H+21</span>','<span contenteditable>-</span>','<span contenteditable>-</span>','<span class="badge b-gold" onclick="toggleFUStatus(this)" style="cursor:pointer">Belum</span>','<span class="badge b-red" onclick="toggleDatangStatus(this)" style="cursor:pointer">Belum</span>','-']);}
+
+function addAdsCampaign(){
+  const list=document.getElementById('ads-campaigns'); if(!list) return;
+  captureSnapshot('tambah campaign');
+  const div=document.createElement('div'); div.className='card';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div contenteditable style="font-weight:700;font-size:14px">Campaign Baru</div><div contenteditable style="font-size:11px;color:var(--gray)">Platform: · Target: · Periode:</div></div><span class="badge b-gold" contenteditable>Rencana</span></div><div class="g4" style="margin:8px 0"><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Impressi</div></div><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Klik</div></div><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Pasien</div></div><div class="stat"><div class="stat-num" contenteditable>Rp 0</div><div class="stat-label">Budget</div></div></div><label class="f-label">🎯 Skenario</label><div contenteditable style="font-size:11px;line-height:1.6;background:var(--gold-p);padding:8px;border-radius:6px">Tulis skenario campaign...</div><label class="f-label" style="margin-top:8px">📊 Evaluasi</label><div contenteditable style="font-size:11px;background:var(--gray-l);padding:8px;border-radius:6px">Evaluasi setelah selesai...</div>`;
+  list.appendChild(div); saveAll();
+}
+
+function addKOLCard(){
+  const list=document.getElementById('kol-cards'); if(!list) return;
+  captureSnapshot('tambah KOL');
+  const div=document.createElement('div'); div.className='kol-card';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><div style="font-weight:700;font-size:14px" contenteditable>Nama KOL</div><div style="font-size:11px;color:var(--gray)" contenteditable>@handle · Platform · Followers</div></div><span class="badge b-gray" onclick="cycleKOLStatus(this)" style="cursor:pointer">Prospek</span></div><div class="kol-stats-row"><div class="kol-stat"><div class="kol-stat-num" contenteditable>-</div><div class="kol-stat-lbl">Followers</div></div><div class="kol-stat"><div class="kol-stat-num" contenteditable>0</div><div class="kol-stat-lbl">Kunjungan</div></div><div class="kol-stat"><div class="kol-stat-num" contenteditable>0</div><div class="kol-stat-lbl">Refer</div></div><div class="kol-stat"><div class="kol-stat-num" contenteditable>-</div><div class="kol-stat-lbl">Deal</div></div></div><div style="font-size:11px;color:var(--gray);margin:4px 0" contenteditable>Treatment: -</div><div style="font-size:11px;background:var(--gold-p);padding:6px 8px;border-radius:6px;margin-top:6px" contenteditable>📋 Skenario: Tulis rencana kolaborasi...</div><div style="margin-top:6px"><label class="f-label" style="font-size:9px">Link konten:</label> <input class="f-input" style="font-size:11px" placeholder="https://..."></div>`;
+  list.appendChild(div); saveAll();
+}
+
+function cycleKOLStatus(el){
+  const statuses=['Prospek','Dipertimbangkan','On Process','Aktif','Hold','Selesai'];
+  const badges=['b-gray','b-blue','b-orange','b-green','b-red','b-gray'];
+  const i=statuses.indexOf(el.textContent);
+  const next=(i+1)%statuses.length;
+  el.textContent=statuses[next]; el.className='badge '+badges[next]; saveAll();
+}
+
+function addPromoCard(){
+  const list=document.getElementById('promo-cards'); if(!list) return;
+  captureSnapshot('tambah promo');
+  const div=document.createElement('div'); div.className='card';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div><div contenteditable style="font-weight:700;font-size:14px">Nama Promo Baru</div><div contenteditable style="font-size:11px;color:var(--gray)">Periode: - · Channel: -</div></div><span class="badge b-gold" contenteditable>Rencana</span></div><div class="g2"><div><label class="f-label">📋 Plan</label><div contenteditable style="font-size:11px;line-height:1.6;background:var(--gold-p);padding:8px;border-radius:6px;min-height:60px">Tulis plan promo...</div></div><div><label class="f-label">📊 Evaluasi</label><div class="g2" style="margin-top:4px"><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Target</div></div><div class="stat"><div class="stat-num" contenteditable style="color:var(--red)">0</div><div class="stat-label">Aktual</div></div></div></div></div>`;
+  list.appendChild(div); saveAll();
+}
+
+function addMonthlyReview(){
+  const list=document.getElementById('monthly-reviews'); if(!list) return;
+  captureSnapshot('tambah monthly review');
+  const m=MONTHS[new Date().getMonth()];
+  const div=document.createElement('div'); div.className='card';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div contenteditable style="font-family:'Italiana',serif;font-size:20px">${m} ${new Date().getFullYear()}</div><span class="badge b-gold" contenteditable>Berjalan</span></div><div class="g4" style="margin-bottom:10px"><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Total Pasien</div></div><div class="stat"><div class="stat-num" contenteditable>Rp 0</div><div class="stat-label">Revenue</div></div><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Pasien Baru</div></div><div class="stat"><div class="stat-num" contenteditable>0</div><div class="stat-label">Pasien Balik</div></div></div><div class="g2"><div><label class="f-label">✅ Yang Berhasil</label><div contenteditable style="font-size:11px;line-height:1.7;background:#E8F8EE;padding:8px;border-radius:6px;min-height:50px">...</div></div><div><label class="f-label">❌ Perlu Diperbaiki</label><div contenteditable style="font-size:11px;line-height:1.7;background:#FDECEA;padding:8px;border-radius:6px;min-height:50px">...</div></div><div><label class="f-label">🎯 Target Bulan Depan</label><div contenteditable style="font-size:11px;line-height:1.7;background:var(--gold-p);padding:8px;border-radius:6px;min-height:50px">...</div></div><div><label class="f-label">💡 Ide & Insight</label><div contenteditable style="font-size:11px;line-height:1.7;background:#EBF5FB;padding:8px;border-radius:6px;min-height:50px">...</div></div></div>`;
+  list.appendChild(div); saveAll();
+}
+
+function addSOPScript(){
+  const title=document.getElementById('sop-title-inp')?.value; if(!title) return;
+  captureSnapshot('tambah SOP');
+  const div=document.createElement('div'); div.className='sop-card';
+  div.innerHTML=`<div class="sop-header" onclick="toggleSOP(this)">${title} <span>▼</span></div><div class="sop-body"><div class="tpl-text" contenteditable style="font-size:12px;line-height:1.8">Tulis script SOP di sini...</div></div>`;
+  const addCard=document.querySelector('#sop .card');
+  const sopSection=document.getElementById('sop');
+  if(addCard) addCard.after(div); else if(sopSection) sopSection.appendChild(div);
+  document.getElementById('sop-title-inp').value=''; saveAll();
+}
+
+function addThComment(){
+  captureSnapshot('tambah komentar');
+  addRow('th-comments-body',['<span contenteditable>Post</span>','<span contenteditable>@user</span>','<span contenteditable>Isi komentar</span>','<span class="badge b-red" onclick="toggleReply(this)" style="cursor:pointer">Belum</span>','<span contenteditable>-</span>']);
+}
+
+// ═══════════════════════════════════════════════════════
+// SAHABAT MODAL
+// ═══════════════════════════════════════════════════════
+function openAddSahabat(){ document.getElementById('sahabat-modal')?.classList.add('open'); }
+function saveSahabat(){
+  const nama=document.getElementById('sb-nama')?.value; if(!nama) return;
+  captureSnapshot('tambah sahabat');
+  const tbody=document.getElementById('sahabat-tbody');
+  const tr=document.createElement('tr');
+  const tier=document.getElementById('sb-tier')?.value||'bronze';
+  const grup=document.getElementById('sb-grup')?.value||'belum';
+  tr.innerHTML=`<td><strong>${nama}</strong></td><td contenteditable>${document.getElementById('sb-hp')?.value||'-'}</td><td><span class="badge b-${lbadge(tier)}">${tier.toUpperCase()}</span></td><td contenteditable>-</td><td><span class="badge b-${grup==='joined'?'green':'gold'}" onclick="toggleGrupStatus(this)" style="cursor:pointer">${grup==='joined'?'Bergabung':'Belum'}</span></td><td>${todayStr()}</td><td><a href="https://wa.me/62${waNum(document.getElementById('sb-hp')?.value||'')}?text=${waText(nama,'sahabat')}" target="_blank" style="background:var(--gold);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 Undang</a></td>`;
+  tbody?.appendChild(tr);
+  closeModal('sahabat-modal'); saveAll(); toast('✓ Member ditambahkan');
+}
+
+// ═══════════════════════════════════════════════════════
+// TOGGLE HELPERS
+// ═══════════════════════════════════════════════════════
+function toggleFUStatus(el){
+  const statuses=['Belum','Sudah','Tidak Bisa Dihubungi'];
+  const i=statuses.indexOf(el.textContent);
+  el.textContent=statuses[(i+1)%statuses.length];
+  el.className='badge b-'+(el.textContent==='Sudah'?'green':el.textContent==='Belum'?'gold':'red');
+  const row=el.closest('tr');
+  if(row&&el.textContent==='Sudah'){const cells=row.querySelectorAll('td');if(cells[6]) cells[6].textContent=todayStr();}
+  saveAll();
+}
+function toggleDatangStatus(el){
+  const s=el.textContent==='Belum'?'Sudah':'Belum';
+  el.textContent=s; el.className='badge b-'+(s==='Sudah'?'green':'red');
+  saveAll();
+}
+function toggleGrupStatus(el){
+  const s=el.textContent==='Bergabung'?'Belum':'Bergabung';
+  el.textContent=s; el.className='badge b-'+(s==='Bergabung'?'green':'gold');
+  saveAll();
+}
+function toggleReply(el){
+  const s=el.textContent==='Belum'?'✓ Dibalas':'Belum';
+  el.textContent=s; el.className='badge b-'+(s==='✓ Dibalas'?'green':'red');
+  const row=el.closest('tr');
+  if(row&&s==='✓ Dibalas'){
+    const cells=row.querySelectorAll('td');
+    if(cells[4]&&cells[4].textContent==='-') cells[4].textContent=todayStr();
+  }
+  saveAll();
+}
+
+function toggleSOP(header){
+  const body=header.nextElementSibling; if(!body) return;
+  body.classList.toggle('open');
+  const arrow=header.querySelector('span');
+  if(arrow) arrow.textContent=body.classList.contains('open')?'▲':'▼';
+}
+
+// ═══════════════════════════════════════════════════════
+// REVIEWS
+// ═══════════════════════════════════════════════════════
+function addReview(){
+  const list=document.getElementById('review-list'); if(!list) return;
+  captureSnapshot('tambah review');
+  const div=document.createElement('div'); div.className='rv-card rv-pos';
+  div.innerHTML=`<div style="font-weight:700;font-size:12px" contenteditable>⭐⭐⭐⭐⭐ — Nama Reviewer</div><div style="font-size:11px;color:var(--brown);margin:4px 0;line-height:1.5" contenteditable>Isi review...</div><div style="font-size:10px;color:var(--gray)" contenteditable>${todayStr()}</div><div style="font-size:11px;font-weight:600;margin-top:4px;cursor:pointer" onclick="toggleReply(this)" class="badge b-red">Belum Dibalas</div>`;
+  list.appendChild(div); saveAll();
+}
+
+// ═══════════════════════════════════════════════════════
+// WA HELPERS
+// ═══════════════════════════════════════════════════════
+function waNum(hp){ return (hp||'').replace(/^0/,'').replace(/\D/g,''); }
+function waText(nama, type){
+  const n=encodeURIComponent(nama||'');
+  if(type==='birthday') return `Selamat+Ulang+Tahun+kak+${n}%21+%F0%9F%8E%82+Ada+hadiah+spesial+dari+Ellis+Estetika+untuk+kakak+bulan+ini.+Mau+kami+bantu+booking%3F+%F0%9F%92%9B`;
+  if(type==='inactive') return `Halo+kak+${n}+%F0%9F%98%8A+Sudah+lama+nih+kami+kangen%21+Ada+promo+spesial+bulan+ini%2C+mau+kami+info-kan%3F+%F0%9F%92%9B`;
+  if(type==='h3') return `Halo+kak+${n}%21+Gimana+kondisi+kulit+setelah+treatment+kemarin%3F+%F0%9F%8C%BF+Ada+yang+mau+ditanyain%3F+%F0%9F%92%9B+%E2%80%94+Ellis+Estetika`;
+  if(type==='sahabat') return `Halo+kak+${n}%21+%F0%9F%91%91+Kakak+terpilih+masuk+Grup+Eksklusif+Sahabat+Ellis%21+Mau+kami+undang+kak%3F+%F0%9F%92%9B`;
+  return '';
+}
+
+// ═══════════════════════════════════════════════════════
+// COPY TEMPLATE
+// ═══════════════════════════════════════════════════════
+function copyTpl(btn){
+  const txt=btn.previousElementSibling?.innerText||'';
+  navigator.clipboard.writeText(txt).then(()=>{
+    btn.textContent='✓ Copied!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='📋 Copy'; btn.classList.remove('copied'); },2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════════════════
+function closeModal(id){ document.getElementById(id)?.classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════════════════
+function lbadge(tier){
+  const t=(tier||'').toString().trim().toLowerCase();
+  if(t==='gold') return 'gold-card'; if(t==='silver') return 'silver'; if(t==='bronze') return 'bronze'; return 'gray';
+}
+// Parse berbagai format tanggal dari Google Sheets
+function parseDate(d) {
+  if(!d||d==='-'||d===' ') return null;
+  try {
+    if(d instanceof Date) return isNaN(d.getTime())?null:d;
+    const s=String(d).trim();
+    if(!s||s.length<4) return null;
+    // ISO datetime dari Sheets: 2026-05-09T17:00:00.000Z
+    let m2=s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+    if(m2) return new Date(+m2[1],+m2[2]-1,+m2[3]);
+    // YYYY-MM-DD atau YYYY/MM/DD
+    m2=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if(m2) return new Date(+m2[1],+m2[2]-1,+m2[3]);
+    // DD/MM/YYYY
+    m2=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if(m2) return new Date(+m2[3],+m2[2]-1,+m2[1]);
+    // Google Sheets serial number
+    const num=parseFloat(s);
+    if(!isNaN(num)&&num>20000&&num<80000){const base=new Date(1899,11,30);base.setDate(base.getDate()+Math.floor(num));return base;}
+    // "1-November-2025"
+    const MON={'januari':0,'februari':1,'maret':2,'april':3,'mei':4,'juni':5,'juli':6,'agustus':7,'september':8,'oktober':9,'november':10,'desember':11};
+    m2=s.match(/(\d{1,2})[\s\-]([a-zA-Z]+)[\s\-](\d{4})/i);
+    if(m2){const mo=MON[m2[2].toLowerCase()];if(mo!==undefined)return new Date(+m2[3],mo,+m2[1]);}
+    const nat=new Date(s);if(!isNaN(nat.getTime()))return nat;
+  } catch(e){}
+  return null;
+}
+function fmtDate(d){
+  if(!d||d==='-'||d===''||d===' ') return '-';
+  // Handle ISO timestamp: 2026-04-09T17:00:00.000Z → ambil tanggal saja
+  if(typeof d==='string'&&d.includes('T')){
+    const dateOnly=d.split('T')[0];
+    const p=parseDate(dateOnly);
+    if(p&&!isNaN(p.getTime())) return p.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return dateOnly;
+  }
+  const parsed=d instanceof Date?d:parseDate(d);
+  if(parsed&&!isNaN(parsed.getTime())) return parsed.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if(typeof d==='string'&&d.length>=8) return d.substring(0,10);
+  return '-';
+}
+function setSyncInfo(msg){ const el=document.getElementById('sync-info'); if(el) el.textContent=msg; }
+function toast(msg){
+  const t=document.getElementById('toast'); if(!t) return;
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.style.opacity='0',3500);
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT XLSX
+// ═══════════════════════════════════════════════════════
+function exportXLSX(){
+  try {
+    const wb=XLSX.utils.book_new();
+    if(todayPatients.length){
+      const ws1=XLSX.utils.json_to_sheet(todayPatients.map(p=>({'Waktu':p.waktu,'Tanggal':p.tanggal,'No Member':p.member,'Nama':p.nama,'HP':p.hp,'Tgl Lahir':p.lahir,'Sumber':p.sumber,'Treatment':p.treatment,'Spend':p.spend,'Masalah Kulit':p.masalah,'Loyalty':p.loyalty,'FU Schedule':p.fuSched,'MGM':p.mgm,'Catatan':p.notes})));
+      XLSX.utils.book_append_sheet(wb,ws1,'Pasien Hari Ini');
+    }
+    const kontenRows=[];
+    Object.entries(calData).forEach(([date,items])=>items.forEach(c=>kontenRows.push({'Tanggal':date,'Platform':c.platform,'Tipe':c.type,'Judul':c.title,'Hook':c.hook,'Caption':c.caption,'Status':c.status,'Views':c.views})));
+    if(kontenRows.length){ const ws2=XLSX.utils.json_to_sheet(kontenRows.sort((a,b)=>a.Tanggal.localeCompare(b.Tanggal))); XLSX.utils.book_append_sheet(wb,ws2,'Kalender Konten'); }
+    const mgmRows=Array.from(document.querySelectorAll('#mgm-tbody tr')).map(tr=>{const c=Array.from(tr.querySelectorAll('td')).map(td=>td.innerText);return{'Pasien Bawa':c[0],'Teman Dibawa':c[1],'Tgl':c[2],'Treatment':c[3],'Reward':c[4],'Status':c[5]};});
+    if(mgmRows.length){const ws3=XLSX.utils.json_to_sheet(mgmRows);XLSX.utils.book_append_sheet(wb,ws3,'MGM');}
+    const srcData=[{sumber:'Instagram'},{sumber:'TikTok'},{sumber:'Threads'},{sumber:'Google Maps'},{sumber:'Referral'},{sumber:'WhatsApp'},{sumber:'Walk-in'},{sumber:'KOL'},{sumber:'Brosur'},{sumber:'Spanduk'},{sumber:'Ads'}];
+    const nums=document.querySelectorAll('#src-chart .src-num');
+    srcData.forEach((r,i)=>r.jumlah=parseInt(nums[i]?.innerText)||0);
+    const ws6=XLSX.utils.json_to_sheet(srcData);XLSX.utils.book_append_sheet(wb,ws6,'Sumber Pasien');
+    XLSX.writeFile(wb,`Ellis_V5_${todayStr()}.xlsx`);
+    toast('✓ Export Excel berhasil!');
+  } catch(e){ toast('⚠️ Gagal export: '+e.message); }
+}
+
+function exportTodayXLSX(){
+  if(!todayPatients.length){toast('Belum ada pasien hari ini');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(todayPatients);
+  XLSX.utils.book_append_sheet(wb,ws,'Pasien '+todayStr());
+  XLSX.writeFile(wb,'Pasien_'+todayStr()+'.xlsx');
+  toast('✓ Export berhasil!');
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  console.log('=== ELLIS V5.1 JSONP BUILD ===');
+  console.log('SHEETS_URL:', DEFAULT_SHEETS_URL);
+  const loaded=loadSaved();
+
+  // Birthday month default
+  const sel=document.getElementById('bday-month-sel');
+  if(sel) sel.value=new Date().getMonth();
+
+  // Set default date
+  const tgl=document.getElementById('pt-tgl'); if(tgl&&!tgl.value) tgl.value=todayStr();
+
+  // Render stamps demo
+  renderStamps('demo-bronze',3);
+  renderStamps('demo-silver',6);
+  renderStamps('demo-gold',9);
+
+  // Calendar year select init
+  initCalYearSelect();
+
+  // Render calendar
+  renderCal();
+
+  // Today patients
+  renderTodayTable();
+
+  // Bank ideas
+  renderBankIdeas();
+
+  // Year tabs for sumber pasien
+  initYearTabs();
+
+  // Active section
+  if(!loaded){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('dashboard')?.classList.add('active');
+    document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+    document.querySelector('.sb-link')?.classList.add('active');
+  }
+
+  // Undo buttons initial state
+  updateUndoButtons();
+
+  // MGM stats — set ke bulan ini otomatis
+  const nowM=String(new Date().getMonth()+1).padStart(2,'0');
+  const statMonth=document.getElementById('mgm-stat-month');
+  if(statMonth) statMonth.value=nowM;
+  setTimeout(()=>updateMGMStats(),500);
+  // Auto sync birthday after master loads
+  setTimeout(()=>syncBirthday(),2000);
+
+  // Reset URL lama dari localStorage — pakai DEFAULT yang baru
+  // Hapus URL lama apapun dari localStorage — selalu pakai DEFAULT terbaru
+  localStorage.removeItem('ellis_sheets_url');
+  SHEETS_URL = getActiveURL();
+  // Init sheets URL input di Settings
+  setTimeout(initSheetsURLInput, 300);
+  // Detect file:// — tampilkan CORS warning
+  if(location.protocol === 'file:') {
+    const banner = document.getElementById('cors-banner');
+    if(banner) banner.style.display = 'block';
+  }
+  toast('✓ Dashboard V5 dimuat — Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Simpan');
+});
+</script>
+</body>
+</html>
