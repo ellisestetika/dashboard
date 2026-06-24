@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ellis Estetika — Dashboard V5</title>
+<title>Ellis Estetika — Dashboard V5.1 JSONP</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Italiana&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -247,15 +247,119 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--dark);f
 <div id="toast"></div>
 
 <!-- TOPBAR -->
+<div id="pin-overlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#1E1A0F 0%,#3D3420 100%);z-index:99999;display:flex;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:20px;padding:36px 32px;width:90%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="font-family:Italiana,serif;font-size:26px;color:#1E1A0F;margin-bottom:3px">Ellis Estetika</div>
+    <div style="font-size:10px;color:#8A7A5A;margin-bottom:24px;letter-spacing:2px;text-transform:uppercase">Dashboard Klinik</div>
+    <div style="font-size:12px;color:#5C4A1E;margin-bottom:14px;font-weight:600">Masukkan PIN 4 digit</div>
+    <div id="pin-dots" style="display:flex;justify-content:center;gap:12px;margin-bottom:22px">
+      <div id="pd1" style="width:14px;height:14px;border-radius:50%;border:2px solid #D4A017;background:transparent;transition:.2s"></div>
+      <div id="pd2" style="width:14px;height:14px;border-radius:50%;border:2px solid #D4A017;background:transparent;transition:.2s"></div>
+      <div id="pd3" style="width:14px;height:14px;border-radius:50%;border:2px solid #D4A017;background:transparent;transition:.2s"></div>
+      <div id="pd4" style="width:14px;height:14px;border-radius:50%;border:2px solid #D4A017;background:transparent;transition:.2s"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+      <button onclick="pinKey(1)" class="pkb">1</button><button onclick="pinKey(2)" class="pkb">2</button><button onclick="pinKey(3)" class="pkb">3</button>
+      <button onclick="pinKey(4)" class="pkb">4</button><button onclick="pinKey(5)" class="pkb">5</button><button onclick="pinKey(6)" class="pkb">6</button>
+      <button onclick="pinKey(7)" class="pkb">7</button><button onclick="pinKey(8)" class="pkb">8</button><button onclick="pinKey(9)" class="pkb">9</button>
+      <button onclick="pinDel()" class="pkb" style="font-size:11px;color:#E74C3C">⌫</button>
+      <button onclick="pinKey(0)" class="pkb">0</button>
+      <button onclick="pinCheck()" class="pkb" style="background:#D4A017;color:white;font-weight:700;border-color:#D4A017">✓</button>
+    </div>
+    <div id="pin-err" style="color:#E74C3C;font-size:11px;min-height:16px;font-weight:600"></div>
+    <div style="font-size:9px;color:#CCCCCC;margin-top:14px">ellis estetika v5 · secured</div>
+  </div>
+</div>
+<style>
+.pkb{padding:13px 8px;border-radius:10px;border:1px solid #E8E0D0;font-size:20px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;background:#FFFCF5;color:#1E1A0F;transition:all .15s}
+.pkb:hover{background:#FDF6E3;border-color:#D4A017}
+.pkb:active{transform:scale(.93);background:#D4A017;color:white}
+</style>
+
+<!-- MODAL UPDATE KUNJUNGAN -->
+<div id="modal-update-kunjungan" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9998;align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-weight:700;font-size:16px;color:#1E1A0F">🔄 Update Kunjungan Pasien</div>
+      <button onclick="tutupModalUpdate()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div id="modal-pasien-info" style="background:#FDF6E3;border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px"></div>
+    <div style="display:grid;gap:10px">
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#5C4A1E;letter-spacing:.5px;text-transform:uppercase">Tanggal Kunjungan</label>
+        <input type="date" id="upd-tanggal" class="f-input" style="margin-top:4px">
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#5C4A1E;letter-spacing:.5px;text-transform:uppercase">Treatment</label>
+        <input type="text" id="upd-treatment" class="f-input" placeholder="Facial, Skinbooster, dll" style="margin-top:4px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:10px;font-weight:600;color:#5C4A1E;letter-spacing:.5px;text-transform:uppercase">Total Spend (Rp)</label>
+          <input type="number" id="upd-spend" class="f-input" placeholder="0" style="margin-top:4px">
+        </div>
+        <div>
+          <label style="font-size:10px;font-weight:600;color:#5C4A1E;letter-spacing:.5px;text-transform:uppercase">Loyalty Tier</label>
+          <select id="upd-loyalty" class="f-select" style="margin-top:4px">
+            <option value="">Sama seperti sebelumnya</option>
+            <option value="bronze">Bronze</option>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#5C4A1E;letter-spacing:.5px;text-transform:uppercase">Masalah Kulit (update jika berubah)</label>
+        <input type="text" id="upd-masalah" class="f-input" placeholder="Kosongkan jika tidak berubah" style="margin-top:4px">
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:600;color:#5C4A1E;letter-spacing:.5px;text-transform:uppercase">Catatan Tambahan</label>
+        <textarea id="upd-notes" class="f-input" rows="2" placeholder="Reaksi kulit, permintaan khusus, dll" style="margin-top:4px;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="simpanUpdateKunjungan()" style="flex:1;background:#D4A017;color:white;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif">
+        💾 Simpan & Sync Sheets
+      </button>
+      <button onclick="tutupModalUpdate()" style="background:#f0f0f0;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Outfit',sans-serif">
+        Batal
+      </button>
+    </div>
+    <div id="upd-status" style="font-size:11px;margin-top:8px;text-align:center;min-height:16px"></div>
+  </div>
+</div>
+<div id="cors-banner" style="display:none;background:#E74C3C;color:white;text-align:center;padding:8px 16px;font-size:11px;font-weight:600">
+  ⚠️ Dibuka via file:// — Load Sheets tidak bisa karena CORS. 
+  <span style="opacity:.8">Solusi: buka Terminal → ketik: </span>
+  <code style="background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px;margin:0 4px">cd Downloads && python3 -m http.server 8080</code>
+  <span style="opacity:.8"> lalu buka </span>
+  <a href="http://localhost:8080" target="_blank" style="color:#FFD700;font-weight:700">http://localhost:8080</a>
+  <button onclick="document.getElementById('cors-banner').style.display='none'" style="background:none;border:none;color:white;cursor:pointer;margin-left:8px;font-size:14px">✕</button>
+</div>
 <div class="topbar">
   <div class="tb-brand">ellis estetika · v5</div>
+  <div style="flex:1;display:flex;align-items:center;padding:0 12px">
+    <div style="position:relative;width:100%;max-width:280px">
+      <input id="global-search" type="text" placeholder="🔍 Cari nama / No. HP..."
+        style="width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(212,160,23,.3);
+               border-radius:20px;padding:5px 14px;color:white;font-size:11px;outline:none;
+               font-family:'Outfit',sans-serif;box-sizing:border-box"
+        oninput="globalSearch(this.value)"
+        onfocus="this.style.borderColor='#D4A017';this.style.background='rgba(255,255,255,.15)'"
+        onblur="this.style.borderColor='rgba(212,160,23,.3)';this.style.background='rgba(255,255,255,.1)';setTimeout(()=>{if(document.activeElement!==this)document.getElementById('global-results').style.display='none'},200)">
+      <div id="global-results" style="display:none;position:absolute;top:34px;left:0;background:white;
+           border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);width:320px;max-height:320px;
+           overflow-y:auto;z-index:9999;border:1px solid #E8E0D0"></div>
+    </div>
+  </div>
   <div class="tb-right">
     <span class="sync-info" id="sync-info">Ready</span>
     <div class="undo-btns">
       <button class="undo-btn" id="btn-undo" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
       <button class="undo-btn" id="btn-redo" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
     </div>
-    <button class="tb-btn btn-outline" onclick="syncAll()">🔄 Sync</button>
+    <button class="tb-btn btn-outline" onclick="syncAll()" title="Load ulang data dari Sheets">🔄 Load</button>
+    <button class="tb-btn" id="btn-sync-sheets" onclick="syncSemuaKeSheets()" title="Simpan semua perubahan ke Google Sheets" style="background:var(--green);color:white">☁️ Sync Sheets</button>
     <button class="tb-btn btn-blue" onclick="exportXLSX()">📊 Excel</button>
     <button class="tb-btn btn-gold" onclick="saveAll()">💾 Simpan</button>
   </div>
@@ -410,7 +514,11 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--dark);f
 <!-- ═══ MASTER PASIEN ═══ -->
 <div id="master-pasien" class="section">
   <div class="sec-hdr"><div class="sec-icon" style="background:#EBF5FB">👥</div><div><div class="sec-title">Master Data Pasien</div><div class="sec-desc">Sumber: Google Sheets</div></div>
-    <div class="sec-actions"><button class="tb-btn btn-gold" onclick="syncMaster()">🔄 Load Sheets</button><button class="tb-btn btn-green" onclick="saveMasterEditsToSheets()">☁️ Simpan Catatan</button></div>
+    <div class="sec-actions" style="flex-wrap:wrap;gap:6px">
+      <button class="tb-btn btn-gold" onclick="syncMaster()">🔄 Load Sheets</button>
+      <button class="tb-btn btn-green" onclick="saveMasterEditsToSheets()">☁️ Simpan Catatan</button>
+      <button class="tb-btn" onclick="updateInactiveStatus()" style="background:#E74C3C;color:white" title="Tandai pasien 90+ hari tidak datang sebagai inactive di Sheets">😴 Scan Inactive</button>
+    </div>
   </div>
   <div class="g4" style="margin-bottom:12px">
     <div class="stat"><div class="stat-num" id="mp-total">369</div><div class="stat-label">Total Pasien</div></div>
@@ -429,7 +537,7 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--dark);f
   <div class="card">
     <div id="master-loading" class="loading" style="display:none"><div class="spinner"></div>Loading dari Google Sheets...</div>
     <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th>No Member</th><th>Nama</th><th>HP</th><th>Tgl Lahir</th><th>Sumber</th><th>Masalah</th><th>Terakhir Datang</th><th>Visit</th><th>Loyalty</th><th>Stamp</th><th>FU H+3 & H+21</th><th>WA Grup</th><th>Notes</th></tr></thead>
+      <thead><tr><th>No Member</th><th>Nama</th><th>HP</th><th>Tgl Lahir</th><th>Sumber</th><th>Masalah</th><th>Terakhir Datang</th><th>Visit</th><th>Loyalty</th><th>Stamp</th><th>FU H+3 & H+21</th><th>WA Grup</th><th>Notes</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody id="master-tbody"><tr><td colspan="13" style="text-align:center;color:var(--gray);padding:20px">Klik "Load Sheets" untuk tampilkan data</td></tr></tbody>
     </table></div>
   </div>
@@ -438,9 +546,10 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--dark);f
 <!-- ═══ FOLLOW UP ═══ -->
 <div id="followup" class="section">
   <div class="sec-hdr"><div class="sec-icon" style="background:#E8F8EE">📞</div><div><div class="sec-title">Follow Up WhatsApp</div><div class="sec-desc">H+3 & H+21 setelah treatment</div></div>
-    <div class="sec-actions">
+    <div class="sec-actions" style="flex-wrap:wrap;gap:6px">
       <button class="tb-btn btn-gold" onclick="syncFU()">🔄 Load Sheets</button>
-      <button class="tb-btn btn-green" onclick="saveFUStatusToSheets()">☁️ Simpan Status FU</button>
+      <button class="tb-btn btn-green" id="fu-save-btn" onclick="saveFUStatusToSheets()">☁️ Simpan Status FU</button>
+      <span id="fu-sync-hint" style="display:none;background:#E8F8EE;color:#1A7A2E;padding:4px 10px;border-radius:8px;font-size:10px;font-weight:700">⚡ Ada perubahan — klik Simpan!</span>
       <button class="tb-btn btn-blue" onclick="addFURow()">+ Manual</button>
     </div>
   </div>
@@ -842,11 +951,24 @@ Mau merasakan hasilnya juga?
   <div class="sec-hdr"><div class="sec-icon" style="background:#E8F8EE">👥</div><div><div class="sec-title">Member Get Member</div><div class="sec-desc">Pasien yang bawa/ajak teman — tanpa kode referral</div></div>
     <div class="sec-actions"><button class="tb-btn btn-green" onclick="addMGMRow()">+ Tambah Baris</button><button class="tb-btn btn-gold" onclick="saveMGMToSheets()">☁️ Simpan ke Sheets</button></div>
   </div>
-  <!-- REKAP PER BULAN -->
+  <!-- REKAP PER BULAN — stat dashboard -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+    <span style="font-size:11px;font-weight:600;color:var(--dark)">📅 Lihat bulan:</span>
+    <select id="mgm-stat-month" class="f-select" style="width:auto;font-size:11px" onchange="updateMGMStats()">
+      <option value="">Semua</option>
+      <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+      <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+      <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+      <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+    </select>
+    <select id="mgm-stat-year" class="f-select" style="width:auto;font-size:11px" onchange="updateMGMStats()">
+      <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+    </select>
+  </div>
   <div class="g3" style="margin-bottom:12px">
-    <div class="stat"><div class="stat-num" id="mgm-bulan" style="color:var(--gold-d)">0</div><div class="stat-label">Teman Dibawa Bulan Ini</div></div>
-    <div class="stat"><div class="stat-num" id="mgm-total" style="color:var(--green)">0</div><div class="stat-label">Total Pasien Baru dari MGM</div></div>
-    <div class="stat"><div class="stat-num" id="mgm-reward" style="color:var(--orange)">0</div><div class="stat-label">Reward Diberikan</div></div>
+    <div class="stat"><div class="stat-num" id="mgm-bulan" style="color:var(--gold-d)">0</div><div class="stat-label">Pasien Bawa Teman</div><div style="font-size:9px;color:var(--gray);margin-top:2px" id="mgm-stat-period">Semua waktu</div></div>
+    <div class="stat"><div class="stat-num" id="mgm-total" style="color:var(--green)">0</div><div class="stat-label">Teman yang Dibawa</div><div style="font-size:9px;color:var(--gray);margin-top:2px">Total teman</div></div>
+    <div class="stat"><div class="stat-num" id="mgm-reward" style="color:var(--orange)">0</div><div class="stat-label">Reward Diberikan</div><div style="font-size:9px;color:var(--gray);margin-top:2px">Status selesai</div></div>
   </div>
   <div class="tips"><div class="tips-t">🎁 Program MGM</div><ul>
     <li>Pasien yang bawa teman → dapat reward (diskon/free treatment)</li>
@@ -1127,6 +1249,27 @@ Sekali lagi kami mohon maaf kak 💛 — Tim Ellis Estetika"</div></div>
     <div id="backup-info" style="font-size:11px;color:var(--gray);margin-top:10px"></div>
   </div>
 
+  <!-- APPS SCRIPT URL — bisa diubah di sini -->
+  <div class="settings-card">
+    <div class="settings-title">🔗 Google Sheets Connection</div>
+    <div class="alert alert-blue" style="margin-bottom:10px">
+      💡 Jika Apps Script di-redeploy dan URL berubah, update di sini — tidak perlu download file baru.
+    </div>
+    <label class="f-label">Apps Script Web App URL</label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input class="f-input" id="sheets-url-input" style="flex:1;min-width:200px;font-size:10px;font-family:monospace" placeholder="https://script.google.com/macros/s/.../exec">
+      <button onclick="saveNewSheetsURL()" class="backup-btn" style="background:var(--gold);color:white;white-space:nowrap">💾 Simpan URL</button>
+      <button onclick="testKoneksiSheets()" class="backup-btn" style="background:var(--blue);color:white;white-space:nowrap">🔌 Test</button>
+      <button onclick="resetSheetsURL()" class="backup-btn" style="background:var(--gray-l);color:var(--gray);white-space:nowrap">↩ Reset Default</button>
+    </div>
+    <div id="sheets-url-status" style="font-size:11px;color:var(--gray);margin-top:8px"></div>
+    <div class="alert alert-warning" style="margin-top:10px;font-size:11px">
+      <strong>⚠️ Jika Load Sheets tidak jalan (CORS error):</strong><br>
+      Update kode Apps Script kamu — tambahkan support JSONP callback. 
+      <button onclick="showAppsScriptUpdate()" style="background:var(--gold);color:white;border:none;padding:3px 10px;border-radius:5px;font-size:10px;cursor:pointer;margin-left:6px;font-family:'Outfit',sans-serif">📋 Lihat Kode Update</button>
+    </div>
+  </div>
+
   <!-- INFO DASHBOARD -->
   <div class="settings-card">
     <div class="settings-title">ℹ️ Info Dashboard</div>
@@ -1134,9 +1277,8 @@ Sekali lagi kami mohon maaf kak 💛 — Tim Ellis Estetika"</div></div>
       <div>🔖 <strong>Versi:</strong> Ellis Estetika Dashboard V5</div>
       <div>📅 <strong>Dibuat:</strong> 2025</div>
       <div>💾 <strong>Save key:</strong> <code>ellis_v5</code></div>
-      <div>🔗 <strong>Sheets URL:</strong> Terhubung ke Google Sheets via Apps Script</div>
       <div>⌨️ <strong>Shortcuts:</strong> Ctrl+Z = Undo · Ctrl+Y = Redo · Ctrl+S = Simpan</div>
-      <div>🔄 <strong>Auto-save:</strong> Aktif, setiap 1.5 detik setelah perubahan</div>
+      <div>🔄 <strong>Auto-save:</strong> Aktif setiap 1.5 detik setelah perubahan</div>
     </div>
   </div>
 
@@ -1202,7 +1344,10 @@ Sekali lagi kami mohon maaf kak 💛 — Tim Ellis Estetika"</div></div>
 // ═══════════════════════════════════════════════════════
 // CONFIG & STATE
 // ═══════════════════════════════════════════════════════
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyQfjrRzl7i4u1zfTGLvudnzVS8rdv8tX-wHgTILzAtvPS_ruxPTOSpyBNwdtIzwG96/exec';
+// SHEETS_URL — bisa diubah dari halaman Settings tanpa perlu edit file
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzWFCfHHZUoxh88LsUgycHeXbVc_VVprz7kdWVK_albUjPeNYxcw3l5uDH-0y_Ale5l7A/exec';
+let SHEETS_URL = localStorage.getItem('ellis_sheets_url') || DEFAULT_SHEETS_URL;
+function getActiveURL(){ return localStorage.getItem('ellis_sheets_url') || DEFAULT_SHEETS_URL; }
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 const SAVE_KEY = 'ellis_v5';
 
@@ -1377,6 +1522,87 @@ document.addEventListener('input', e=>{
 // ═══════════════════════════════════════════════════════
 // BACKUP & RESTORE
 // ═══════════════════════════════════════════════════════
+// ── MANAGE SHEETS URL ──
+function showAppsScriptUpdate(){
+  const code = `function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = (e && e.parameter && e.parameter.sheet) ? e.parameter.sheet : 'master';
+  let sheetName;
+  if (sheet === 'inactive') sheetName = 'Inactive patient 3 BULAN TERAKH';
+  else if (sheet === 'treatment') sheetName = 'RIWAYAT TREATMENT';
+  else sheetName = 'MASTER DATA PASIEN';
+  const ws = ss.getSheetByName(sheetName) || ss.getSheets()[0];
+  const data = ws.getDataRange().getValues();
+  const cleaned = data.map(function(row) {
+    return row.map(function(cell) {
+      if (cell instanceof Date) {
+        return Utilities.formatDate(cell, 'Asia/Jakarta', 'dd/MM/yyyy');
+      }
+      return cell;
+    });
+  });
+  const result = JSON.stringify({ status: 'ok', data: cleaned });
+  // Support JSONP untuk bypass CORS
+  const callback = e && e.parameter && e.parameter.callback;
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + result + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(result)
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:white;border-radius:14px;padding:20px;max-width:580px;width:93%;max-height:90vh;overflow-y:auto">
+    <div style="font-weight:700;font-size:15px;margin-bottom:8px">📋 Update Apps Script</div>
+    <div style="font-size:11px;color:#555;line-height:1.6;margin-bottom:10px">
+      Copy kode doGet() di bawah → ganti di Apps Script kamu → Save → Deploy sebagai New Deployment → Who has access: <strong>Anyone</strong>
+    </div>
+    <pre style="background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:10px;overflow-x:auto;line-height:1.5">${code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="navigator.clipboard.writeText(\`${code.replace(/\`/g,'\`')}\`).then(()=>toast('✓ Kode dicopy!'))" style="background:#D4A017;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">📋 Copy Kode</button>
+      <button onclick="this.closest('div[style]').remove()" style="background:#f0f0f0;border:none;padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer">Tutup</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function saveNewSheetsURL(){
+  const inp = document.getElementById('sheets-url-input');
+  const url = inp?.value?.trim();
+  if(!url || !url.startsWith('https://script.google.com')){
+    toast('⚠️ URL tidak valid — harus dari script.google.com');
+    return;
+  }
+  localStorage.setItem('ellis_sheets_url', url);
+  SHEETS_URL = url;
+  const status = document.getElementById('sheets-url-status');
+  if(status) status.innerHTML = '✅ URL disimpan: <code style="font-size:10px">'+url.substring(0,60)+'...</code>';
+  toast('✓ URL baru disimpan! Klik Test untuk verifikasi.');
+}
+
+function resetSheetsURL(){
+  localStorage.removeItem('ellis_sheets_url');
+  SHEETS_URL = DEFAULT_SHEETS_URL;
+  const inp = document.getElementById('sheets-url-input');
+  if(inp) inp.value = DEFAULT_SHEETS_URL;
+  const status = document.getElementById('sheets-url-status');
+  if(status) status.textContent = 'URL direset ke default.';
+  toast('↩ URL direset ke default');
+}
+
+function initSheetsURLInput(){
+  const inp = document.getElementById('sheets-url-input');
+  if(!inp) return;
+  const saved = localStorage.getItem('ellis_sheets_url');
+  inp.value = saved || DEFAULT_SHEETS_URL;
+  const status = document.getElementById('sheets-url-status');
+  if(status){
+    if(saved) status.innerHTML = '✅ Pakai URL custom: <code style="font-size:10px">'+saved.substring(0,60)+'...</code>';
+    else status.textContent = 'Pakai URL default (belum ada perubahan).';
+  }
+}
+
 function backupData() {
   const raw = localStorage.getItem(SAVE_KEY);
   if (!raw) { toast('⚠️ Belum ada data untuk dibackup'); return; }
@@ -1648,7 +1874,7 @@ function renderStamps(id, filled) {
   for(let i=1;i<=10;i++){
     const s=document.createElement('div');
     s.className='stamp'+(i<=filled?' filled':'')+(i===4||i===10?' reward-stamp':'');
-    s.textContent=i<=filled?(i===4||i===10?'🎁':'✓'):'';
+    s.textContent=i<=filled?(i===4||i===10?'🎁':'✓'):(i===4||i===10?'·':'');
     c.appendChild(s);
   }
 }
@@ -1744,17 +1970,75 @@ function getFormData(){
   };
 }
 
-function submitPatient(){
+async function submitPatient(){
   const data=getFormData();
   if(!data.nama){ toast('⚠️ Nama pasien harus diisi!'); return; }
   captureSnapshot('input pasien');
   todayPatients.push(data);
   localStorage.setItem('ellis_today_'+todayKey(), JSON.stringify(todayPatients));
   renderTodayTable();
-  // Sync to Sheets
-  fetch(SHEETS_URL+'?action=appendRow&data='+encodeURIComponent(JSON.stringify(data)))
-    .then(()=>toast('✓ Pasien disimpan & sync ke Sheets!'))
-    .catch(()=>toast('✓ Pasien disimpan (Sheets offline)'));
+
+  // Hitung FU H+3 dan H+21
+  const tglDate = new Date(data.tanggal);
+  const fuH3 = new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
+  const fuH21 = new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
+  const fmtD = d => d.toLocaleDateString('id-ID');
+
+  // Build row sesuai urutan kolom MASTER DATA PASIEN:
+  // 0=NO MEMBER, 1=NAMA, 2=NO.HP, 3=TGL LAHIR, 4=UMUR
+  // 5=SUMBER, 6=INSTAGRAM, 7=MASALAH UTAMA, 8=MASALAH KEDUA
+  // 9=TERAKHIR DATANG, 10=TOTAL VISIT, 11=TOTAL SPEND
+  // 12=FU H+3, 13=STATUS H+3, 14=FU H+21, 15=STATUS H+21
+  // 16=LOYALTY, 17=STAMP, 18=REWARD 4, 19=REWARD 10
+  // 20=REFERAL COUNT, 21=REVIEW, 22=WA GRUP, 23=BIRTHDAY FU, 24=NOTES, 25=BEFORE AFTER
+  const row = [
+    data.member||'BARU',     // 0 NO MEMBER
+    data.nama,               // 1 NAMA
+    data.hp||'',             // 2 NO.HP
+    data.lahir||'',          // 3 TGL LAHIR
+    '',                      // 4 UMUR (kosong, bisa dihitung)
+    data.sumber||'',         // 5 SUMBER
+    '',                      // 6 INSTAGRAM
+    data.masalah||'',        // 7 MASALAH UTAMA
+    '',                      // 8 MASALAH KEDUA
+    data.tanggal,            // 9 TERAKHIR DATANG
+    '1',                     // 10 TOTAL VISIT
+    data.spend||'0',         // 11 TOTAL SPEND
+    fmtD(fuH3),              // 12 FU H+3
+    'belum',                 // 13 STATUS H+3
+    fmtD(fuH21),             // 14 FU H+21
+    'belum',                 // 15 STATUS H+21
+    data.loyalty||'',        // 16 LOYALTY
+    '0',                     // 17 STAMP
+    '',                      // 18 REWARD 4
+    '',                      // 19 REWARD 10
+    data.mgm?'1':'0',        // 20 REFERAL COUNT
+    '',                      // 21 REVIEW
+    '',                      // 22 WA GRUP
+    '',                      // 23 BIRTHDAY FU
+    data.notes||'',          // 24 NOTES
+    ''                       // 25 BEFORE AFTER
+  ];
+
+  setSyncInfo('⏳ Menyimpan pasien ke Sheets...');
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({
+        action: 'append',
+        sheet: 'MASTER DATA PASIEN',
+        row: row
+      })
+    });
+    toast('✓ ' + data.nama + ' disimpan! Cek Sheets dalam beberapa detik.');
+    setSyncInfo('✓ Tersimpan ' + new Date().toLocaleTimeString('id-ID'));
+  } catch(err){
+    toast('⚠️ Gagal koneksi ke Sheets — data tersimpan lokal');
+    setSyncInfo('⚠️ Offline');
+    console.error('Sheets POST error:', err);
+  }
   resetForm();
 }
 
@@ -1802,33 +2086,345 @@ function delTodayPatient(i){
 // Data row mulai slice(3) — skip 2 header baris + 1 title baris
 // ═══════════════════════════════════════════════════════
 
-async function syncAll(){ await syncMaster(); toast('✓ Sync selesai'); }
+async function syncAll(){ await syncMaster(); toast('✓ Load selesai'); }
+
+// ═══════════════════════════════════════════════════════
+// SYNC SEMUA KE SHEETS — 1 tombol untuk semua section
+// ═══════════════════════════════════════════════════════
+async function syncSemuaKeSheets(){
+  const btn = document.getElementById('btn-sync-sheets');
+  if(btn){ btn.textContent='⏳ Menyimpan...'; btn.disabled=true; btn.style.opacity='.6'; }
+
+  const results = [];
+
+  // 1. Loyalty — stempel & tier
+  try {
+    const loyaltyRows = document.querySelectorAll('#loyalty-tbody tr');
+    let loyaltyCount = 0;
+    for(const tr of loyaltyRows){
+      const memberId = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!memberId || memberId==='-') continue;
+      const rowIdx = masterData.findIndex(r=>String(r[0]).trim()===memberId);
+      if(rowIdx<0) continue;
+      const stamp = parseInt(tr.querySelectorAll('td')[4]?.innerText)||0;
+      const tierEl = tr.querySelector('td:nth-child(4) .badge');
+      const tier = tierEl?.innerText?.toLowerCase()||'';
+      const klaim4 = tr.querySelector('td:nth-child(8) .badge')?.innerText?.includes('Sudah');
+      const klaim10 = tr.querySelector('td:nth-child(9) .badge')?.innerText?.includes('Sudah');
+      const sheetRow = rowIdx + 1;
+      const ps = [];
+      if(tier) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier}));
+      if(stamp>=0) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp}));
+      if(klaim4) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'}));
+      if(klaim10) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'}));
+      await Promise.all(ps);
+      loyaltyCount++;
+    }
+    if(loyaltyCount>0) results.push('💳 Loyalty: '+loyaltyCount+' member');
+  } catch(e){ results.push('⚠️ Loyalty gagal'); console.error(e); }
+
+  // 2. Follow Up — status H+3 & H+21
+  try {
+    const fuRows = document.querySelectorAll('#fu-tbody tr');
+    let fuCount = 0;
+    for(const tr of fuRows){
+      const nama = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!nama) continue;
+      const rowIdx = masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===nama.toLowerCase());
+      if(rowIdx<0) continue;
+      const stH3 = tr.querySelector('td:nth-child(6) .badge')?.innerText?.trim()||'';
+      const stH21 = tr.querySelector('td:nth-child(8) .badge')?.innerText?.trim()||'';
+      const ps = [];
+      if(stH3 && stH3 !== String(masterData[rowIdx][13]||'').trim()){
+        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:stH3}));
+        masterData[rowIdx][13] = stH3;
+      }
+      if(stH21 && stH21 !== String(masterData[rowIdx][15]||'').trim()){
+        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:stH21}));
+        masterData[rowIdx][15] = stH21;
+      }
+      if(ps.length){ await Promise.all(ps); fuCount++; }
+    }
+    if(fuCount>0) results.push('📞 Follow Up: '+fuCount+' pasien');
+  } catch(e){ results.push('⚠️ FU gagal'); console.error(e); }
+
+  // 3. Master Pasien — notes/catatan (kolom 25)
+  try {
+    const masterRows = document.querySelectorAll('#master-tbody tr');
+    let notesCount = 0;
+    for(const tr of masterRows){
+      const memberId = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!memberId || memberId==='-') continue;
+      const rowIdx = masterData.findIndex(r=>String(r[0]).trim()===memberId);
+      if(rowIdx<0) continue;
+      const notes = tr.querySelectorAll('td')[12]?.innerText?.trim()||'';
+      const curr = String(masterData[rowIdx][24]||'').trim();
+      if(notes !== curr){
+        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:25,value:notes});
+        masterData[rowIdx][24] = notes;
+        notesCount++;
+      }
+    }
+    if(notesCount>0) results.push('📋 Notes: '+notesCount+' baris');
+  } catch(e){ results.push('⚠️ Notes gagal'); console.error(e); }
+
+  // 4. MGM — update referal count pasien yang bawa
+  try {
+    const mgmRows = document.querySelectorAll('#mgm-tbody tr');
+    let mgmCount = 0;
+    const processed = new Set();
+    for(const tr of mgmRows){
+      if(tr.style.display==='none') continue;
+      const pasienBawa = tr.querySelectorAll('td')[0]?.innerText?.trim();
+      if(!pasienBawa || processed.has(pasienBawa)) continue;
+      processed.add(pasienBawa);
+      if(masterData.length){
+        const rowIdx = masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===pasienBawa.toLowerCase());
+        if(rowIdx>=0){
+          // Hitung berapa kali pasien ini bawa teman
+          const count = Array.from(mgmRows).filter(r=>r.querySelectorAll('td')[0]?.innerText?.trim()===pasienBawa).length;
+          await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:count});
+          masterData[rowIdx][20] = count;
+          mgmCount++;
+        }
+      }
+    }
+    if(mgmCount>0) results.push('👥 MGM: '+mgmCount+' pasien diupdate');
+  } catch(e){ results.push('⚠️ MGM gagal'); console.error(e); }
+
+  // 5. MGM — sync ke sheet MGM
+  try {
+    const mgmRows = Array.from(document.querySelectorAll('#mgm-tbody tr'));
+    const validMGM = mgmRows.filter(tr=>tr.style.display!=='none' && (tr.querySelectorAll('td')[0]?.innerText||'').trim());
+    if(validMGM.length > 0){
+      const mgmData = validMGM.map(tr=>{
+        const cells = tr.querySelectorAll('td');
+        return [
+          (cells[0]?.innerText||'').trim(),
+          (cells[1]?.innerText||'').trim(),
+          (cells[2]?.innerText||'').trim(),
+          (cells[3]?.innerText||'').trim(),
+          (cells[4]?.innerText||'').trim(),
+          cells[5]?.querySelector('.badge')?.innerText?.trim()||'',
+          todayStr()
+        ];
+      });
+      await postToSheets({action:'clear_and_replace',sheet:'MEMBER GET MEMBER',rows:mgmData});
+      results.push('👥 MGM: '+mgmData.length+' baris');
+    }
+  } catch(e){ results.push('⚠️ MGM gagal'); }
+
+  // Tampilkan hasil
+  if(btn){ btn.textContent='☁️ Sync Sheets'; btn.disabled=false; btn.style.opacity='1'; }
+
+  if(results.length===0){
+    toast('ℹ️ Tidak ada perubahan yang perlu disync ke Sheets');
+    setSyncInfo('✓ Tidak ada perubahan');
+  } else {
+    const msg = '✓ Tersimpan ke Sheets: '+results.join(' · ');
+    toast(msg);
+    setSyncInfo('✓ Sync '+new Date().toLocaleTimeString('id-ID'));
+  }
+}
+
+// Helper: POST ke Sheets dengan no-cors
+async function testKoneksiSheets(){
+  toast('⏳ Testing koneksi ke Apps Script...');
+  setSyncInfo('⏳ Testing...');
+  try {
+    SHEETS_URL = getActiveURL(); const url = SHEETS_URL + '?sheet=master';
+    const res = await fetch(url, {method:'GET', redirect:'follow'});
+    const text = await res.text();
+    console.log('Test response status:', res.status);
+    console.log('Test response (first 300):', text.substring(0,300));
+    if(text.startsWith('{') || text.startsWith('[')){
+      const json = JSON.parse(text);
+      if(json.status === 'ok'){
+        toast('✅ Koneksi OK! '+json.data?.length+' baris data ditemukan. Sekarang klik Load Sheets.');
+        setSyncInfo('✅ Koneksi Apps Script OK');
+      } else {
+        toast('⚠️ Respon tidak ok: '+JSON.stringify(json).substring(0,100));
+      }
+    } else if(text.includes('<!DOCTYPE') || text.includes('<html')){
+      toast('⚠️ Apps Script redirect ke halaman login Google — perlu set deploy ke "Anyone"');
+      setSyncInfo('⚠️ Perlu login Google');
+    } else {
+      toast('⚠️ Response tidak terduga: '+text.substring(0,80));
+    }
+  } catch(e){
+    toast('❌ Tidak bisa connect: '+e.message);
+    setSyncInfo('❌ Koneksi gagal');
+    console.error('Test koneksi error:', e);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// GLOBAL SEARCH
+// ══════════════════════════════════════════════════════
+function globalSearch(q){
+  const box = document.getElementById('global-results');
+  if(!q || q.length < 2){ box.style.display='none'; return; }
+  if(!masterData.length){ box.innerHTML='<div style="padding:12px;font-size:11px;color:#888">Load Sheets dulu untuk cari pasien</div>'; box.style.display='block'; return; }
+
+  const keyword = q.toLowerCase().trim();
+  const valid = masterData.slice(3).filter(r=>r[1]);
+  const results = valid.filter(r=>{
+    const nama = String(r[1]||'').toLowerCase();
+    const hp = String(r[2]||'').toLowerCase();
+    const member = String(r[0]||'').toLowerCase();
+    return nama.includes(keyword) || hp.includes(keyword) || member.includes(keyword);
+  }).slice(0,10);
+
+  if(!results.length){
+    box.innerHTML='<div style="padding:12px;font-size:11px;color:#888;text-align:center">Tidak ditemukan</div>';
+    box.style.display='block'; return;
+  }
+
+  const LOYALTY_COLOR = {bronze:'#CD7F32',silver:'#A8A9AD',gold:'#D4A017'};
+  box.innerHTML = results.map(r=>{
+    const loyColor = LOYALTY_COLOR[String(r[16]||'').toLowerCase()] || '#AAAAAA';
+    const lastVisit = r[9] ? String(r[9]).substring(0,10) : '-';
+    return `<div onclick="jumpToPatient('${r[0]}','${String(r[1]).replace(/'/g,"\'")}');document.getElementById('global-search').value='';document.getElementById('global-results').style.display='none'"
+      style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #F5F0E8;transition:background .1s"
+      onmouseover="this.style.background='#FDF6E3'" onmouseout="this.style.background='white'">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong style="font-size:12px;color:#1E1A0F">${r[1]}</strong>
+          <span style="font-size:10px;color:#888;margin-left:6px">${r[2]||''}</span>
+        </div>
+        <span style="font-size:9px;font-weight:700;color:${loyColor};text-transform:uppercase">${r[16]||''}</span>
+      </div>
+      <div style="font-size:10px;color:#888;margin-top:2px">
+        No. ${r[0]||'-'} · Terakhir: ${lastVisit} · ${r[10]||0} visit
+      </div>
+    </div>`;
+  }).join('');
+  box.style.display='block';
+}
+
+function jumpToPatient(memberId, nama){
+  // Buka Master Pasien dan highlight pasien
+  showSection('master-pasien');
+  setTimeout(()=>{
+    const searchInput = document.getElementById('mp-search');
+    if(searchInput){ searchInput.value=nama; filterMaster(); }
+    // Scroll ke row yang relevan
+    setTimeout(()=>{
+      const rows = document.querySelectorAll('#master-tbody tr');
+      for(const row of rows){
+        if(row.cells[0]&&row.cells[0].textContent.trim()===memberId){
+          row.style.background='#FFF3CD';
+          row.scrollIntoView({behavior:'smooth',block:'center'});
+          setTimeout(()=>row.style.background='',3000);
+          break;
+        }
+      }
+    },300);
+  },100);
+}
+
+// Tutup search saat klik di luar
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#global-search') && !e.target.closest('#global-results')){
+    const box = document.getElementById('global-results');
+    if(box) box.style.display='none';
+  }
+});
+
+async function postToSheets(payload){
+  return fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify(payload)
+  });
+}
 
 async function syncMaster(){
-  setSyncInfo('⏳ Loading Master...');
+  setSyncInfo('⏳ Loading...');
   const loadEl=document.getElementById('master-loading');
   if(loadEl) loadEl.style.display='block';
+  
+  const url = getActiveURL() + '?sheet=master';
+  let ok = false;
+
+  // Coba fetch dulu (jalan kalau ada CORS header / localhost)
   try {
-    const res=await fetch(SHEETS_URL+'?sheet=master');
-    const json=await res.json();
-    if(json.status==='ok'){
-      masterData=json.data||[];
-      const valid=masterData.slice(3).filter(r=>r[1]);
-      document.getElementById('sb-total').textContent=valid.length;
-      // Stats
-      const today=new Date();
-      const active=valid.filter(r=>{ const d=parseDate(r[9]); return d&&(today-d)/86400000<=30; });
-      const inactive90=valid.filter(r=>{ const d=parseDate(r[9]); return !d||(today-d)/86400000>=90; });
-      const thisMonth=valid.filter(r=>{ const d=parseDate(r[9]); return d&&d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear(); });
-      const mpActive=document.getElementById('mp-active'); if(mpActive) mpActive.textContent=active.length;
-      const mpInactive=document.getElementById('mp-inactive'); if(mpInactive) mpInactive.textContent=inactive90.length;
-      const mpNew=document.getElementById('mp-new'); if(mpNew) mpNew.textContent=thisMonth.length;
-      renderMasterTable();
-      setSyncInfo('✓ Sync OK — '+valid.length+' pasien');
-      toast('✓ Master dimuat: '+valid.length+' pasien');
-    } else throw new Error('bad status');
-  } catch(e){ setSyncInfo('⚠️ Offline'); toast('⚠️ Gagal load Sheets. Cek koneksi.'); console.error(e); }
+    const res = await fetch(url, {signal: AbortSignal.timeout(8000)});
+    const json = await res.json();
+    if(json.status==='ok'){ processMasterData(json.data||[]); ok=true; }
+  } catch(e){ console.log('fetch gagal, coba JSONP...', e.message); }
+
+  // Fallback JSONP — jalan dari file:// dan GitHub Pages
+  if(!ok){
+    try {
+      await new Promise((res,rej)=>{
+        const fn='_cb'+Date.now();
+        const s=document.createElement('script');
+        let done=false;
+        window[fn]=(d)=>{
+          done=true; delete window[fn];
+          s.parentNode&&s.parentNode.removeChild(s);
+          if(d&&d.status==='ok'){processMasterData(d.data||[]);ok=true;}
+          res();
+        };
+        s.onerror=()=>{ delete window[fn]; s.parentNode&&s.parentNode.removeChild(s); rej(new Error('JSONP error')); };
+        s.src=url+'&callback='+fn;
+        document.head.appendChild(s);
+        setTimeout(()=>{ if(!done){delete window[fn];s.parentNode&&s.parentNode.removeChild(s);rej(new Error('Timeout'));}},12000);
+      });
+    } catch(e){ console.error('JSONP gagal:', e.message); }
+  }
+
+  if(!ok){
+    setSyncInfo('⚠️ Gagal');
+    toast('⚠️ Tidak bisa load. Pastikan internet aktif dan Apps Script sudah di-deploy terbaru.');
+  }
   if(loadEl) loadEl.style.display='none';
+}
+
+function processMasterData(data){
+  masterData = data;
+  const valid = masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA');
+  const sbTotal=document.getElementById('sb-total'); if(sbTotal) sbTotal.textContent=valid.length;
+  const today=new Date();
+  const mpActive=document.getElementById('mp-active'); if(mpActive) mpActive.textContent=valid.filter(r=>{const d=parseDate(r[9]);return d&&(today-d)/86400000<=30;}).length;
+  const mpInactive=document.getElementById('mp-inactive'); if(mpInactive) mpInactive.textContent=valid.filter(r=>{const d=parseDate(r[9]);return !d||(today-d)/86400000>=90;}).length;
+  const mpNew=document.getElementById('mp-new'); if(mpNew) mpNew.textContent=valid.filter(r=>{const d=parseDate(r[9]);return d&&d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();}).length;
+  renderMasterTable();
+  setSyncInfo('✓ '+valid.length+' pasien — '+new Date().toLocaleTimeString('id-ID'));
+  toast('✓ '+valid.length+' pasien berhasil dimuat!');
+  setTimeout(()=>syncBirthday(),500);
+  setTimeout(()=>checkBirthdayToday(),1000);
+}
+
+function showManualLoadOption(url){
+  const existing = document.getElementById('manual-load-modal');
+  if(existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'manual-load-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML='<div style="background:white;border-radius:14px;padding:20px;max-width:500px;width:100%">'+
+    '<div style="font-weight:700;font-size:15px;margin-bottom:8px">⚠️ Tidak bisa load otomatis</div>'+
+    '<div style="font-size:12px;color:#555;line-height:1.7;margin-bottom:10px">'+
+    'Klik link di bawah → copy semua teks yang muncul (Ctrl+A, Ctrl+C) → paste di kotak ini:</div>'+
+    '<a href="'+url+'" target="_blank" style="display:block;font-size:10px;background:#f5f5f5;padding:8px;border-radius:6px;word-break:break-all;color:#2980B9;margin-bottom:10px">'+url+'</a>'+
+    '<textarea id="manual-json-input" style="width:100%;height:100px;font-size:10px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:vertical;box-sizing:border-box" placeholder=\'Paste JSON di sini... {"status":"ok","data":[...]}\' ></textarea>'+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+    '<button onclick="loadManualJSON()" style="background:#D4A017;color:white;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif">✓ Load Data</button>'+
+    '<button onclick="document.getElementById(\'manual-load-modal\').remove()" style="background:#f0f0f0;border:none;padding:8px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif">Tutup</button>'+
+    '</div></div>';
+  document.body.appendChild(modal);
+}
+
+function loadManualJSON(){
+  const txt=(document.getElementById('manual-json-input')?.value||'').trim();
+  if(!txt){toast('⚠️ Paste JSON dulu');return;}
+  try{
+    const json=JSON.parse(txt);
+    if(json.status==='ok'&&json.data){ processMasterData(json.data); document.getElementById('manual-load-modal')?.remove(); }
+    else toast('⚠️ JSON tidak valid');
+  }catch(e){toast('⚠️ Bukan JSON: '+e.message);}
 }
 
 async function syncInactive(){
@@ -1857,7 +2453,7 @@ function filterInactive(){
   else if(f==='60') data=inactiveData.filter(r=>r._days>=60&&r._days<90);
   else if(f==='90') data=inactiveData.filter(r=>r._days>=90);
   const tbody=document.getElementById('inactive-tbody'); if(!tbody) return;
-  tbody.innerHTML=data.slice(0,150).map(r=>`<tr>
+  tbody.innerHTML=data.slice(0,150).map((r,_i)=>`<tr>
     <td><strong>${r[1]}</strong></td>
     <td style="font-size:10px">${r[2]||'-'}</td>
     <td>${fmtDate(r[9])}</td>
@@ -1866,7 +2462,10 @@ function filterInactive(){
     <td contenteditable style="font-size:10px">${r[13]||'Belum'}</td>
     <td contenteditable style="font-size:10px">${r[24]||'-'}</td>
     <td><span class="badge b-gray" onclick="toggleDatangStatus(this)" style="cursor:pointer">Belum</span></td>
-    <td><a href="https://wa.me/62${waNum(r[2])}?text=${waText(r[1],'inactive')}" target="_blank" style="background:var(--green);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 WA</a></td>
+    <td style="white-space:nowrap">
+      <a href="https://wa.me/62${waNum(r[2])}?text=${waText(r[1],'inactive')}" target="_blank" style="background:var(--green);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 WA</a>
+      <button onclick="tandaiAktifKembali(${_i})" style="background:#2980B9;color:white;border:none;padding:3px 7px;border-radius:5px;font-size:9px;cursor:pointer;margin-left:3px;font-weight:700" title="Pasien datang kembali - update kunjungan">✅ Aktif</button>
+    </td>
   </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada data</td></tr>';
 }
 
@@ -2048,7 +2647,7 @@ async function addStampV4(btn, memberId, currentStamp, currentCardNum){
     if(rowIdx>=0){
       masterData[rowIdx][17]=newStamp;
       masterData[rowIdx]._cardNum=newCard;
-      await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:18,value:newStamp})});
+      await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:18,value:newStamp});
     }
   } catch(e){ console.warn('Sheets update failed, saved locally'); }
   syncLoyalty();
@@ -2060,11 +2659,199 @@ async function updateTierV4(sel, memberId){
   try {
     const rowIdx=masterData.findIndex(r=>r[0]===memberId);
     if(rowIdx>=0){
-      await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:17,value:tier})});
+      await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:17,value:tier});
       masterData[rowIdx][16]=tier; syncLoyalty(); toast(`✓ Tier → ${tier}`);
     }
   } catch(e){ toast('⚠️ Gagal update'); }
   sel.value='';
+}
+
+// ══════════════════════════════════════════════════════
+// UPDATE KUNJUNGAN MEMBER LAMA
+// ══════════════════════════════════════════════════════
+let _updatingRow=null, _updatingRowIdx=-1;
+
+function bukaModalUpdateByIdx(idx){
+  // Cari index sebenarnya di masterData (filtered index → masterData index)
+  const filtered = masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA');
+  // Terapkan filter yang sedang aktif
+  const searchVal = (document.getElementById('mp-search')?.value||'').toLowerCase();
+  const loyFilter = document.getElementById('mp-loyalty-filter')?.value||'';
+  const srcFilter = document.getElementById('mp-sumber-filter')?.value||'';
+  const filteredActive = filtered.filter(r=>{
+    const nama=String(r[1]||'').toLowerCase();
+    const hp=String(r[2]||'').toLowerCase();
+    const matchSearch=!searchVal||nama.includes(searchVal)||hp.includes(searchVal);
+    const matchLoy=!loyFilter||String(r[16]||'').toLowerCase()===loyFilter.toLowerCase();
+    const matchSrc=!srcFilter||String(r[5]||'').toLowerCase().includes(srcFilter.toLowerCase());
+    return matchSearch&&matchLoy&&matchSrc;
+  });
+  const rowData = filteredActive[idx];
+  if(!rowData){toast('⚠️ Data tidak ditemukan');return;}
+  bukaModalUpdate(rowData);
+}
+
+function bukaModalUpdate(rowData){
+  _updatingRow=rowData;
+  _updatingRowIdx=masterData.findIndex(r=>r[0]===rowData[0]&&r[1]===rowData[1]);
+  const info=document.getElementById('modal-pasien-info');
+  if(info) info.innerHTML=`<div style="display:flex;justify-content:space-between">
+    <div><strong style="font-size:14px">${rowData[1]}</strong><span style="font-size:11px;color:#888;margin-left:8px">${rowData[2]||''}</span></div>
+    <span style="font-size:10px;font-weight:700;color:#D4A017;text-transform:uppercase">${rowData[16]||'No Tier'}</span></div>
+    <div style="font-size:11px;color:#666;margin-top:6px">No. ${rowData[0]||'-'} · Visit: <strong>${rowData[10]||0}</strong> · Terakhir: <strong>${rowData[9]||'-'}</strong></div>`;
+  const today=new Date().toISOString().split('T')[0];
+  const ti=document.getElementById('upd-tanggal'); if(ti) ti.value=today;
+  ['upd-treatment','upd-spend','upd-masalah','upd-notes','upd-loyalty'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const tglDate=new Date();
+  const fuH3=new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
+  const fuH21=new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
+  const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  document.getElementById('upd-status').innerHTML=`<span style="color:#888;font-size:10px">FU otomatis: H+3=${fmtD(fuH3)} | H+21=${fmtD(fuH21)}</span>`;
+  const modal=document.getElementById('modal-update-kunjungan');
+  if(modal) modal.style.display='flex';
+}
+
+function tutupModalUpdate(){
+  const modal=document.getElementById('modal-update-kunjungan');
+  if(modal) modal.style.display='none';
+  _updatingRow=null; _updatingRowIdx=-1;
+}
+
+async function simpanUpdateKunjungan(){
+  if(!_updatingRow||_updatingRowIdx<0){toast('⚠️ Pilih pasien dulu');return;}
+  const tgl=document.getElementById('upd-tanggal').value;
+  if(!tgl){toast('⚠️ Tanggal wajib diisi');return;}
+  const treatment=(document.getElementById('upd-treatment').value||'').trim();
+  const spend=(document.getElementById('upd-spend').value||'').trim();
+  const loyalty=document.getElementById('upd-loyalty').value;
+  const masalah=(document.getElementById('upd-masalah').value||'').trim();
+  const notes=(document.getElementById('upd-notes').value||'').trim();
+  const statusEl=document.getElementById('upd-status');
+  statusEl.textContent='⏳ Menyimpan ke Sheets...';
+  captureSnapshot('update kunjungan');
+  const tglDate=new Date(tgl);
+  const fuH3=new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
+  const fuH21=new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
+  const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  const fmtTgl=tglDate.toLocaleDateString('id-ID');
+  const r=masterData[_updatingRowIdx];
+  const newVisit=parseInt(r[10]||0)+1;
+  r[9]=fmtTgl; r[10]=newVisit;
+  if(masalah) r[7]=masalah;
+  if(loyalty) r[16]=loyalty;
+  r[12]=fmtD(fuH3); r[13]='belum';
+  r[14]=fmtD(fuH21); r[15]='belum';
+  if(notes) r[24]=notes;
+  const sheetRow=_updatingRowIdx+1;
+  try {
+    const updates=[
+      {colIndex:10,value:fmtTgl},{colIndex:11,value:newVisit},
+      {colIndex:13,value:fmtD(fuH3)},{colIndex:14,value:'belum'},
+      {colIndex:15,value:fmtD(fuH21)},{colIndex:16,value:'belum'},
+    ];
+    if(masalah) updates.push({colIndex:8,value:masalah});
+    if(loyalty) updates.push({colIndex:17,value:loyalty});
+    if(notes) updates.push({colIndex:25,value:notes});
+    for(const u of updates) await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:u.colIndex,value:u.value});
+    statusEl.innerHTML='<span style="color:#27AE60;font-weight:700">✅ Tersimpan!</span>';
+    toast(`✅ ${r[1]} — kunjungan ke-${newVisit} dicatat! FU H+3: ${fmtD(fuH3)}`);
+    renderMasterTable();
+    setTimeout(tutupModalUpdate,1500);
+  } catch(e){
+    statusEl.innerHTML='<span style="color:#E74C3C">⚠️ Gagal sync</span>';
+    toast('⚠️ Tersimpan lokal, Sheets gagal: '+e.message);
+  }
+  saveAll();
+}
+
+// ══════════════════════════════════════════════════════
+// BIRTHDAY NOTIFICATION OTOMATIS
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// STATUS AKTIF / INACTIVE OTOMATIS
+// ══════════════════════════════════════════════════════
+function getStatusBadge(tglTerakhir){
+  if(!tglTerakhir||tglTerakhir==='-'||tglTerakhir==='') 
+    return '<span style="font-size:9px;color:#aaa">-</span>';
+  const d = parseDate(String(tglTerakhir));
+  if(!d) return '<span style="font-size:9px;color:#aaa">-</span>';
+  const diffDays = Math.floor((new Date()-d)/86400000);
+  if(diffDays < 0) return '<span style="font-size:9px;color:#aaa">-</span>';
+  if(diffDays <= 30) return '<span style="background:#E8F8EE;color:#1A7A2E;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">✅ Aktif</span>';
+  if(diffDays <= 90) return '<span style="background:#FEF5E7;color:#B7770D;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">⚠️ Jarang</span>';
+  return '<span style="background:#FDECEA;color:#C0392B;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700">😴 Inactive</span>';
+}
+
+// Scan & update status inactive otomatis di Sheets
+async function updateInactiveStatus(){
+  if(!masterData.length){toast('⚠️ Load Sheets dulu');return;}
+  const today = new Date();
+  let updated = 0;
+  const valid = masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim());
+  for(let i=0;i<valid.length;i++){
+    const r = valid[i];
+    const d = parseDate(String(r[9]||''));
+    if(!d) continue;
+    const diffDays = Math.floor((today-d)/86400000);
+    const rowIdx = masterData.indexOf(r);
+    // Kalau inactive 90+ hari dan belum ditandai
+    if(diffDays >= 90){
+      // Update notes dengan tag [INACTIVE] kalau belum ada
+      const notes = String(r[24]||'');
+      if(!notes.includes('[INACTIVE]')){
+        const newNotes = notes ? notes+' [INACTIVE]' : '[INACTIVE]';
+        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:25,value:newNotes});
+        masterData[rowIdx][24] = newNotes;
+        updated++;
+      }
+    }
+  }
+  if(updated>0){
+    toast(`✅ ${updated} pasien ditandai INACTIVE di Sheets`);
+    renderMasterTable();
+  } else {
+    toast('ℹ️ Tidak ada perubahan status inactive');
+  }
+}
+
+function checkBirthdayToday(){
+  if(!masterData.length) return;
+  const today=new Date();
+  const valid=masterData.slice(3).filter(r=>r[1]);
+  const bdays=valid.filter(r=>{
+    const s=String(r[3]||'').trim();
+    if(!s||s==='-') return false;
+    const pts=s.split('/');
+    let d;
+    if(pts.length===3) d=new Date(parseInt(pts[2]),parseInt(pts[1])-1,parseInt(pts[0]));
+    else d=new Date(s);
+    return d&&!isNaN(d.getTime())&&d.getDate()===today.getDate()&&d.getMonth()===today.getMonth();
+  });
+  if(!bdays.length) return;
+  const names=bdays.slice(0,3).map(r=>r[1]).join(', ')+(bdays.length>3?` +${bdays.length-3} lainnya`:'');
+  const notif=document.createElement('div');
+  notif.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4A017,#F0C040);color:#1E1A0F;padding:12px 20px;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 4px 20px rgba(212,160,23,.4);z-index:9997;display:flex;align-items:center;gap:10px;max-width:90%';
+  notif.innerHTML=`<span style="font-size:22px">🎂</span><div><div style="font-size:13px">Ulang Tahun Hari Ini!</div><div style="font-size:11px;font-weight:400;margin-top:2px">${names}</div></div>
+    <button onclick="showSection('birthday');this.parentElement.remove()" style="background:#1E1A0F;color:#D4A017;border:none;padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;font-weight:700;margin-left:8px">Lihat</button>
+    <span onclick="this.parentElement.remove()" style="font-size:16px;opacity:.6;cursor:pointer;margin-left:4px">✕</span>`;
+  document.body.appendChild(notif);
+  setTimeout(()=>{if(notif.parentNode)notif.remove();},12000);
+}
+
+function tandaiAktifKembali(inactiveIdx){
+  // Ambil data dari inactiveData yang sedang ditampilkan
+  const f = document.getElementById('inactive-filter')?.value||'all';
+  let displayData = inactiveData;
+  if(f==='30') displayData=inactiveData.filter(r=>r._days>=30&&r._days<60);
+  else if(f==='60') displayData=inactiveData.filter(r=>r._days>=60&&r._days<90);
+  else if(f==='90') displayData=inactiveData.filter(r=>r._days>=90);
+  
+  const r = displayData[inactiveIdx];
+  if(!r){ toast('⚠️ Data tidak ditemukan'); return; }
+  
+  // Buka modal update kunjungan
+  bukaModalUpdate(r);
+  toast(`📋 Update kunjungan ${r[1]} — isi tanggal datang kembali, lalu simpan`);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2107,10 +2894,10 @@ async function saveAllLoyaltyToSheets(){
       const sheetRow = rowIdx + 1; // +1 karena Sheets 1-indexed
       // Update: col 17=LOYALTY(index 16), col 18=STAMP(index 17), col 19=REWARD4(index 18), col 21=REWARD10(index 20)
       const promises = [];
-      if(tier) promises.push(fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier})}));
-      if(stamp) promises.push(fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp})}));
-      if(klaim4) promises.push(fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'})}));
-      if(klaim10) promises.push(fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'})}));
+      if(tier) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier})}));
+      if(stamp) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp})}));
+      if(klaim4) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'})}));
+      if(klaim10) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'})}));
       await Promise.all(promises);
       success++;
     } catch(e){ fail++; }
@@ -2144,13 +2931,13 @@ async function saveMasterEditsToSheets(){
     if(notes===currentNotes) continue;
 
     try {
-      await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({
+      await postToSheets({
         action:'update_cell',
         sheet:'MASTER DATA PASIEN',
         rowIndex:rowIdx+1,
-        colIndex:25, // kolom 25 = NOTES (index 24)
+        colIndex:25,
         value:notes
-      })});
+      });
       masterData[rowIdx][24]=notes;
       success++;
     } catch(e){ fail++; }
@@ -2188,11 +2975,11 @@ async function saveFUStatusToSheets(){
     try {
       const promises=[];
       if(statusH3&&statusH3!==currH3){
-        promises.push(fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:statusH3})}));
+        promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:statusH3})}));
         masterData[rowIdx][13]=statusH3;
       }
       if(statusH21&&statusH21!==currH21){
-        promises.push(fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:statusH21})}));
+        promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:statusH21})}));
         masterData[rowIdx][15]=statusH21;
       }
       if(promises.length){ await Promise.all(promises); success++; }
@@ -2207,47 +2994,50 @@ async function saveFUStatusToSheets(){
 // Karena tidak ada sheet MGM tersendiri, kita append ke sheet baru "MGM"
 // Atau update kolom REFERAL COUNT (kolom 21) di master
 async function saveMGMToSheets(){
-  const rows = Array.from(document.querySelectorAll('#mgm-tbody tr'));
-  if(!rows.length){ toast('⚠️ Belum ada data MGM'); return; }
+  const rows=Array.from(document.querySelectorAll('#mgm-tbody tr'));
+  if(!rows.length){toast('⚠️ Belum ada data MGM');return;}
+  setSyncInfo('⏳ Menyimpan MGM...');
+  toast('⏳ Menyimpan data MGM ke Sheets...');
 
-  setSyncInfo('⏳ Menyimpan data MGM...');
-  toast('⏳ Menyimpan MGM ke Sheets...');
+  const mgmData=[];
+  const referalUpdate={};
 
-  let success=0, fail=0;
   for(const tr of rows){
     if(tr.style.display==='none') continue;
-    const cells = tr.querySelectorAll('td');
-    const pasienBawa = cells[0]?.innerText?.trim()||'';
-    const temanDibawa = cells[1]?.innerText?.trim()||'';
-    const tglKunjungan = cells[2]?.innerText?.trim()||'';
-    const treatment = cells[3]?.innerText?.trim()||'';
-    const reward = cells[4]?.innerText?.trim()||'';
-    const status = cells[5]?.innerText?.trim()||'';
+    const cells=tr.querySelectorAll('td');
+    const pasienBawa=(cells[0]?.innerText||'').trim();
+    const temanDibawa=(cells[1]?.innerText||'').trim();
+    const tgl=(cells[2]?.innerText||'').trim();
+    const treatment=(cells[3]?.innerText||'').trim();
+    const reward=(cells[4]?.innerText||'').trim();
+    const statusEl=cells[5]?.querySelector('.badge');
+    const status=statusEl?.innerText?.trim()||'';
     if(!pasienBawa) continue;
+    mgmData.push([pasienBawa,temanDibawa,tgl,treatment,reward,status,todayStr()]);
+    if(!referalUpdate[pasienBawa]) referalUpdate[pasienBawa]=0;
+    referalUpdate[pasienBawa]++;
+  }
 
-    const mgmRow = [pasienBawa, temanDibawa, tglKunjungan, treatment, reward, status, todayStr()];
-    try {
-      await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({
-        action:'append',
-        sheet:'MASTER DATA PASIEN', // append ke sheet yang ada, atau bisa buat sheet MGM baru
-        row:[] // kosong — kita simpan lokal saja + update referal count
-      })});
-    } catch(e){}
+  // Sync ke sheet MEMBER GET MEMBER
+  try{
+    await postToSheets({action:'clear_and_replace',sheet:'MEMBER GET MEMBER',rows:mgmData});
+    toast(`✅ ${mgmData.length} baris MGM tersimpan ke Sheets!`);
+  }catch(e){
+    toast('⚠️ Gagal sync MGM: '+e.message);
+  }
 
-    // Update REFERAL COUNT (kolom 21, index 20) untuk pasien yang bawa
-    if(masterData.length){
-      const rowIdx=masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===pasienBawa.toLowerCase());
+  // Update REFERAL COUNT di master
+  if(masterData.length){
+    for(const[nama,count] of Object.entries(referalUpdate)){
+      const rowIdx=masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===nama.toLowerCase());
       if(rowIdx>=0){
-        const cur=parseInt(masterData[rowIdx][20]||0)+1;
-        try{
-          await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:cur})});
-          masterData[rowIdx][20]=cur; success++;
-        }catch(e){ fail++; }
+        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:count});
+        masterData[rowIdx][20]=count;
       }
     }
   }
-  setSyncInfo(`✓ MGM tersimpan`);
-  toast(success>0?`✓ Referal count diupdate untuk ${success} pasien!`:'✓ Data MGM tersimpan lokal (Sheets diupdate saat ada nama yang cocok)');
+
+  setSyncInfo('✓ MGM tersimpan '+new Date().toLocaleTimeString('id-ID'));
 }
 
 async function syncSahabat(){
@@ -2280,20 +3070,22 @@ function renderMasterTable(){
     return n.includes(q)&&(lt===''||l.includes(lt))&&(src===''||s.includes(src));
   });
   const mpTotal=document.getElementById('mp-total'); if(mpTotal) mpTotal.textContent=rows.length;
-  tbody.innerHTML=filtered.slice(0,300).map(r=>`<tr>
-    <td>${r[0]||'-'}</td>
+  tbody.innerHTML=filtered.slice(0,300).map((r,_idx)=>`<tr>
+    <td style="font-size:10px">${r[0]||'-'}</td>
     <td><strong>${r[1]}</strong></td>
-    <td>${r[2]||'-'}</td>
-    <td>${fmtDate(r[3])}</td>
-    <td><span class="badge b-blue" style="font-size:9px">${r[5]||'-'}</span></td>
-    <td style="font-size:10px">${(r[7]||'-').toString().substring(0,30)}</td>
-    <td>${fmtDate(r[9])}</td>
+    <td style="font-size:10px">${r[2]||'-'}</td>
+    <td style="font-size:10px">${fmtDate(r[3])}</td>
+    <td><span class="badge b-blue" style="font-size:9px">${r[5]&&String(r[5]).trim()&&r[5]!==''?r[5]:'-'}</span></td>
+    <td style="font-size:10px">${(r[7]||'-').toString().substring(0,25)}</td>
+    <td style="font-size:10px">${fmtDate(r[9])}</td>
     <td style="font-size:10px">${r[10]||'0'} visit</td>
     <td><span class="badge b-${lbadge(r[16])}">${r[16]||'-'}</span></td>
-    <td>${r[17]||'0'}/10</td>
-    <td style="font-size:9px">${r[12]||'-'} / ${r[14]||'-'}</td>
+    <td style="font-size:10px">${r[17]||'0'}/10</td>
+    <td style="font-size:9px">${fmtDate(r[12])||'-'} / ${fmtDate(r[14])||'-'}</td>
     <td><span class="badge b-${r[22]==='ya'||r[22]==='Bergabung'?'green':'gray'}" style="font-size:9px">${r[22]||'-'}</span></td>
     <td style="font-size:10px">${(r[24]||'-').toString().substring(0,30)}</td>
+    <td>${getStatusBadge(r[9])}</td>
+    <td><button onclick="bukaModalUpdateByIdx(${_idx})" style="background:#D4A017;color:white;border:none;padding:3px 8px;border-radius:5px;font-size:9px;cursor:pointer;font-weight:700;white-space:nowrap">+ Kunjungan</button></td>
   </tr>`).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--gray)">Tidak ada data</td></tr>';
 }
 
@@ -2389,22 +3181,52 @@ function addMGMRekapRow(){
 }
 function updateMGMStats(){
   const rows=Array.from(document.querySelectorAll('#mgm-tbody tr'));
-  const thisMonth=new Date().toISOString().slice(0,7);
-  const bulan=rows.filter(r=>{const c=r.querySelectorAll('td')[2]; return c&&c.textContent.includes(thisMonth);}).length;
-  const total=rows.length;
-  const reward=rows.filter(r=>{const s=r.querySelector('.badge'); return s&&s.textContent==='Reward Diberikan';}).length;
-  const el1=document.getElementById('mgm-bulan'); if(el1) el1.textContent=bulan;
-  const el2=document.getElementById('mgm-total'); if(el2) el2.textContent=total;
-  const el3=document.getElementById('mgm-reward'); if(el3) el3.textContent=reward;
+  const selMonth=document.getElementById('mgm-stat-month')?.value||'';
+  const selYear=document.getElementById('mgm-stat-year')?.value||'';
+
+  // Filter rows berdasarkan bulan/tahun dari kolom tgl (kolom ke-3, index 2)
+  const filtered=rows.filter(r=>{
+    if(r.style.display==='none') return false;
+    const tgl=(r.querySelectorAll('td')[2]?.innerText||r.querySelectorAll('td')[2]?.textContent||'').trim();
+    const matchYear=!selYear||tgl.includes(selYear);
+    const matchMonth=!selMonth||tgl.includes('-'+selMonth+'-')||tgl.includes('/'+selMonth+'/')||tgl.slice(5,7)===selMonth;
+    return matchYear&&matchMonth;
+  });
+
+  // Hitung pasien unik yang bawa (kolom 0)
+  const uniqueBawa=new Set(filtered.map(r=>(r.querySelectorAll('td')[0]?.innerText||'').trim()).filter(Boolean));
+  // Hitung total teman yang dibawa (kolom 1 — bisa lebih dari 1 per baris, pisah koma)
+  let totalTeman=0;
+  filtered.forEach(r=>{
+    const teman=(r.querySelectorAll('td')[1]?.innerText||'').trim();
+    if(teman) totalTeman+=teman.split(',').filter(s=>s.trim()).length;
+  });
+  // Reward diberikan
+  const reward=filtered.filter(r=>{const s=r.querySelector('.badge');return s&&s.textContent.trim()==='Reward Diberikan';}).length;
+
+  document.getElementById('mgm-bulan').textContent=uniqueBawa.size;
+  document.getElementById('mgm-total').textContent=totalTeman;
+  document.getElementById('mgm-reward').textContent=reward;
+
+  // Update label periode
+  const periodEl=document.getElementById('mgm-stat-period');
+  if(periodEl){
+    if(!selMonth&&!selYear) periodEl.textContent='Semua waktu';
+    else {
+      const bln=['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      periodEl.textContent=(selMonth?bln[parseInt(selMonth)]+' ':'')+selYear;
+    }
+  }
 }
 function filterMGM(){
   const month=document.getElementById('mgm-month-filter')?.value||'';
   const year=document.getElementById('mgm-year-filter')?.value||'';
   Array.from(document.querySelectorAll('#mgm-tbody tr')).forEach(tr=>{
-    const tgl=(tr.querySelectorAll('td')[2]?.textContent||'');
-    const show=(!month||tgl.includes('-'+month+'-')||tgl.includes('/'+month+'/'))&&(!year||tgl.includes(year));
+    const tgl=(tr.querySelectorAll('td')[2]?.innerText||tr.querySelectorAll('td')[2]?.textContent||'').trim();
+    const show=(!month||tgl.includes('-'+month+'-')||tgl.includes('/'+month+'/')||tgl.slice(5,7)===month)&&(!year||tgl.includes(year));
     tr.style.display=show?'':'none';
   });
+  updateMGMStats();
 }
 function addBrosurRow(){addRow('brosur-tbody',['<span contenteditable>Tema</span>','<span contenteditable>-</span>','<span contenteditable>500</span>','<span contenteditable>0</span>','<span contenteditable>500</span>','<span contenteditable>0</span>','<span class="badge b-gold">Rencana</span>','<button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>']);}
 function addBBRow(){addRow('bb-tbody',['<span contenteditable>Tipe</span>','<span contenteditable>Ukuran</span>','<span contenteditable>Lokasi</span>','<span contenteditable>-</span>','<span contenteditable>Rp 0</span>','<span contenteditable>0</span>','<span class="badge b-gold">Rencana</span>','<button onclick="delRow(this)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>']);}
@@ -2489,12 +3311,26 @@ function saveSahabat(){
 // ═══════════════════════════════════════════════════════
 function toggleFUStatus(el){
   const statuses=['Belum','Sudah','Tidak Bisa Dihubungi'];
-  const i=statuses.indexOf(el.textContent);
-  el.textContent=statuses[(i+1)%statuses.length];
-  el.className='badge b-'+(el.textContent==='Sudah'?'green':el.textContent==='Belum'?'gold':'red');
+  const badges=['b-gold','b-green','b-red'];
+  const i=statuses.indexOf(el.textContent.trim());
+  const next=(i+1)%statuses.length;
+  el.textContent=statuses[next];
+  el.className='badge '+badges[next];
+  // Isi tanggal FU otomatis kalau jadi Sudah
   const row=el.closest('tr');
-  if(row&&el.textContent==='Sudah'){const cells=row.querySelectorAll('td');if(cells[6]) cells[6].textContent=todayStr();}
+  if(row&&statuses[next]==='Sudah'){
+    const cells=row.querySelectorAll('td');
+    // Cari cell yang contentEditable untuk tgl FU
+    for(let c of cells){
+      if(c.contentEditable==='true'&&(!c.textContent||c.textContent==='-')){
+        c.textContent=todayStr(); break;
+      }
+    }
+  }
   saveAll();
+  // Tampilkan hint sync
+  const syncHint = document.getElementById('fu-sync-hint');
+  if(syncHint) syncHint.style.display='inline-flex';
 }
 function toggleDatangStatus(el){
   const s=el.textContent==='Belum'?'Sudah':'Belum';
@@ -2578,25 +3414,39 @@ function parseDate(d) {
     if(d instanceof Date) return isNaN(d.getTime())?null:d;
     const s=String(d).trim();
     if(!s||s.length<4) return null;
-    let m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-    if(m) return new Date(+m[1],+m[2]-1,+m[3]);
-    m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-    if(m) return new Date(+m[3],+m[2]-1,+m[1]);
+    // ISO datetime dari Sheets: 2026-05-09T17:00:00.000Z
+    let m2=s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+    if(m2) return new Date(+m2[1],+m2[2]-1,+m2[3]);
+    // YYYY-MM-DD atau YYYY/MM/DD
+    m2=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    if(m2) return new Date(+m2[1],+m2[2]-1,+m2[3]);
+    // DD/MM/YYYY
+    m2=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if(m2) return new Date(+m2[3],+m2[2]-1,+m2[1]);
+    // Google Sheets serial number
     const num=parseFloat(s);
     if(!isNaN(num)&&num>20000&&num<80000){const base=new Date(1899,11,30);base.setDate(base.getDate()+Math.floor(num));return base;}
+    // "1-November-2025"
     const MON={'januari':0,'februari':1,'maret':2,'april':3,'mei':4,'juni':5,'juli':6,'agustus':7,'september':8,'oktober':9,'november':10,'desember':11};
-    m=s.match(/(\d{1,2})[\s\-]([a-zA-Z]+)[\s\-](\d{4})/i);
-    if(m){const mo=MON[m[2].toLowerCase()];if(mo!==undefined)return new Date(+m[3],mo,+m[1]);}
+    m2=s.match(/(\d{1,2})[\s\-]([a-zA-Z]+)[\s\-](\d{4})/i);
+    if(m2){const mo=MON[m2[2].toLowerCase()];if(mo!==undefined)return new Date(+m2[3],mo,+m2[1]);}
     const nat=new Date(s);if(!isNaN(nat.getTime()))return nat;
   } catch(e){}
   return null;
 }
 function fmtDate(d){
-  if(!d||d==='-') return '-';
+  if(!d||d==='-'||d===''||d===' ') return '-';
+  // Handle ISO timestamp: 2026-04-09T17:00:00.000Z → ambil tanggal saja
+  if(typeof d==='string'&&d.includes('T')){
+    const dateOnly=d.split('T')[0];
+    const p=parseDate(dateOnly);
+    if(p&&!isNaN(p.getTime())) return p.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return dateOnly;
+  }
   const parsed=d instanceof Date?d:parseDate(d);
   if(parsed&&!isNaN(parsed.getTime())) return parsed.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
-  if(typeof d==='string') return d.substring(0,10);
-  return String(d).substring(0,10);
+  if(typeof d==='string'&&d.length>=8) return d.substring(0,10);
+  return '-';
 }
 function setSyncInfo(msg){ const el=document.getElementById('sync-info'); if(el) el.textContent=msg; }
 function toast(msg){
@@ -2643,6 +3493,8 @@ function exportTodayXLSX(){
 // INIT
 // ═══════════════════════════════════════════════════════
 window.addEventListener('load',()=>{
+  console.log('=== ELLIS V5.1 JSONP BUILD ===');
+  console.log('SHEETS_URL:', DEFAULT_SHEETS_URL);
   const loaded=loadSaved();
 
   // Birthday month default
@@ -2683,12 +3535,73 @@ window.addEventListener('load',()=>{
   // Undo buttons initial state
   updateUndoButtons();
 
-  // MGM stats
+  // MGM stats — set ke bulan ini otomatis
+  const nowM=String(new Date().getMonth()+1).padStart(2,'0');
+  const statMonth=document.getElementById('mgm-stat-month');
+  if(statMonth) statMonth.value=nowM;
   setTimeout(()=>updateMGMStats(),500);
   // Auto sync birthday after master loads
   setTimeout(()=>syncBirthday(),2000);
 
+  // Reset URL lama dari localStorage — pakai DEFAULT yang baru
+  // Hapus URL lama apapun dari localStorage — selalu pakai DEFAULT terbaru
+  localStorage.removeItem('ellis_sheets_url');
+  SHEETS_URL = getActiveURL();
+  // Init sheets URL input di Settings
+  setTimeout(initSheetsURLInput, 300);
+  // Detect file:// — tampilkan CORS warning
+  if(location.protocol === 'file:') {
+    const banner = document.getElementById('cors-banner');
+    if(banner) banner.style.display = 'block';
+  }
   toast('✓ Dashboard V5 dimuat — Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+S Simpan');
+  initPIN();
+});
+
+// ══════════════════════════════════
+// PIN PROTECTION
+// ══════════════════════════════════
+const CORRECT_PIN='1234'; // ← ganti PIN kamu di sini
+let _pin='';
+function initPIN(){
+  const saved=sessionStorage.getItem('ellis_pin');
+  if(saved&&Date.now()-parseInt(saved)<8*3600*1000){pinUnlock();return;}
+  document.getElementById('pin-overlay').style.display='flex';
+}
+function pinKey(n){
+  if(_pin.length>=4)return;
+  _pin+=n;
+  for(let i=1;i<=4;i++){
+    const d=document.getElementById('pd'+i);
+    if(d) d.style.background=i<=_pin.length?'#D4A017':'transparent';
+  }
+  if(_pin.length===4)setTimeout(pinCheck,200);
+}
+function pinDel(){
+  if(_pin.length>0){_pin=_pin.slice(0,-1);}
+  for(let i=1;i<=4;i++){const d=document.getElementById('pd'+i);if(d)d.style.background=i<=_pin.length?'#D4A017':'transparent';}
+  document.getElementById('pin-err').textContent='';
+}
+function pinCheck(){
+  if(_pin===CORRECT_PIN){
+    sessionStorage.setItem('ellis_pin',Date.now());
+    pinUnlock();
+  } else {
+    document.getElementById('pin-err').textContent='PIN salah, coba lagi';
+    _pin='';
+    for(let i=1;i<=4;i++){const d=document.getElementById('pd'+i);if(d)d.style.background='transparent';}
+  }
+}
+function pinUnlock(){
+  const ov=document.getElementById('pin-overlay');
+  if(ov){ov.style.opacity='0';ov.style.transition='opacity .3s';setTimeout(()=>ov.style.display='none',300);}
+}
+document.addEventListener('keydown',e=>{
+  const ov=document.getElementById('pin-overlay');
+  if(!ov||ov.style.display==='none')return;
+  if(e.key>='0'&&e.key<='9')pinKey(parseInt(e.key));
+  else if(e.key==='Enter')pinCheck();
+  else if(e.key==='Backspace')pinDel();
 });
 </script>
 </body>
