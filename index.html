@@ -2478,7 +2478,7 @@ function filterInactive(){
   const tbody=document.getElementById('inactive-tbody'); if(!tbody) return;
   tbody.innerHTML=data.slice(0,150).map((r,_i)=>`<tr>
     <td><strong>${r[1]}</strong></td>
-    <td style="font-size:10px">${r[2]||'-'}</td>
+    <td style="font-size:10px">${String(r[2]||'-')}</td>
     <td>${fmtDate(r[9])}</td>
     <td><span class="badge b-${r._days>=90?'red':r._days>=60?'orange':'gold'}">${r._days} hari</span></td>
     <td style="font-size:10px">${(r[7]||'-').toString().substring(0,40)}</td>
@@ -2562,7 +2562,7 @@ async function syncFU(){
     const d3=new Date(lastVisit); d3.setDate(d3.getDate()+3);
     const d21=new Date(lastVisit); d21.setDate(d21.getDate()+21);
     return {
-      nama:r[1], hp:r[2],
+      nama:r[1], hp:String(r[2]||''),
       treatment:(r[6]||'-').toString().substring(0,40),
       tglTreatment:fmtDate(r[8]),
       fuH3:r[11]&&String(r[11]).trim()&&r[11]!=='-' ? r[11] : fmtDate(d3),
@@ -3453,7 +3453,15 @@ function addReview(){
 // ═══════════════════════════════════════════════════════
 // WA HELPERS
 // ═══════════════════════════════════════════════════════
-function waNum(hp){ return (hp||'').replace(/^0/,'').replace(/\D/g,''); }
+function waNum(hp){
+  if(!hp) return '';
+  const s = String(hp).trim();
+  const digits = s.replace(/\D/g,'');
+  if(digits.startsWith('62')) return digits;
+  if(digits.startsWith('0')) return '62'+digits.slice(1);
+  if(digits.startsWith('8')) return '62'+digits;
+  return digits;
+}
 function waText(nama, type){
   const n=encodeURIComponent(nama||'');
   if(type==='birthday') return `Selamat+Ulang+Tahun+kak+${n}%21+%F0%9F%8E%82+Ada+hadiah+spesial+dari+Ellis+Estetika+untuk+kakak+bulan+ini.+Mau+kami+bantu+booking%3F+%F0%9F%92%9B`;
