@@ -1759,6 +1759,22 @@ function saveContent() {
   };
   if(currentIdx!==null&&calData[dk]&&calData[dk][currentIdx]) calData[dk][currentIdx]=entry;
   else calData[dk].push(entry);
+
+  // Update ide juga kalau dibuka dari Bank Ide
+  if(window._editingIdea){
+    const {platform, idx} = window._editingIdea;
+    const ideas = platform==='ig'?igIdeas:platform==='tt'?ttIdeas:thIdeas;
+    if(ideas[idx]){
+      ideas[idx].title = entry.title || ideas[idx].title;
+      ideas[idx].hook = entry.hook || ideas[idx].hook;
+      ideas[idx].caption = entry.caption || ideas[idx].caption;
+      ideas[idx].status = entry.status || ideas[idx].status;
+      ideas[idx].type = entry.type || ideas[idx].type;
+      renderBankIdeas();
+    }
+    window._editingIdea = null;
+  }
+
   renderCal(); closeModal('cal-modal'); saveAll(); toast('✓ Konten tersimpan');
 }
 
@@ -1868,26 +1884,6 @@ function editIdeaLengkap(platform, idx){
   window._editingIdea = {platform, idx};
   
   openModal('cal-modal');
-}
-
-// Override saveContent untuk update ide juga jika diedit dari ide
-const _origSaveContent = saveContent;
-function saveContent(){
-  _origSaveContent();
-  // Jika diedit dari ide, update data ide juga
-  if(window._editingIdea){
-    const {platform, idx} = window._editingIdea;
-    const ideas = platform==='ig'?igIdeas:platform==='tt'?ttIdeas:thIdeas;
-    if(ideas[idx]){
-      ideas[idx].title = document.getElementById('m-title')?.value || ideas[idx].title;
-      ideas[idx].hook = document.getElementById('m-hook')?.value || ideas[idx].hook;
-      ideas[idx].caption = document.getElementById('m-caption')?.value || ideas[idx].caption;
-      ideas[idx].status = document.getElementById('m-status')?.value || ideas[idx].status;
-      ideas[idx].type = document.getElementById('m-type')?.value || ideas[idx].type;
-      renderBankIdeas();
-    }
-    window._editingIdea = null;
-  }
 }
 
 function addIgIdea(){ captureSnapshot('tambah ide ig'); igIdeas.push({title:'Ide Konten Baru',hook:'',status:'ide',type:'skit',date:'',platform:'ig'}); renderBankIdeas(); saveAll(); }
