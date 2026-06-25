@@ -1978,39 +1978,56 @@ async function submitPatient(){
   localStorage.setItem('ellis_today_'+todayKey(),JSON.stringify(todayPatients));
   renderTodayTable();
 
-  // Hitung FU dates
   const tglDate=new Date(data.tanggal);
   const fuH3=new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
   const fuH21=new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
   const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 
+  // Kirim data minimal — hanya kolom yang penting
+  // Apps Script akan appendRow dengan data ini
   const row=[
-    data.member||'BARU', data.nama, data.hp||'',
-    data.lahir||'', '', data.sumber||'', '', data.masalah||'', '',
-    data.tanggal, '1', data.spend||'0',
-    fmtD(fuH3),'belum',fmtD(fuH21),'belum',
-    data.loyalty||'','0','','',
-    data.mgm?'1':'0','','','',data.notes||'',''
+    'BARU',           // 0: NO MEMBER
+    data.nama,        // 1: NAMA
+    data.hp||'',      // 2: NO HP
+    data.lahir||'',   // 3: TGL LAHIR
+    '',               // 4: UMUR
+    data.sumber||'',  // 5: SUMBER
+    '',               // 6: INSTAGRAM
+    data.masalah||'', // 7: MASALAH UTAMA
+    '',               // 8: MASALAH KEDUA
+    data.tanggal,     // 9: TERAKHIR DATANG
+    '1',              // 10: TOTAL VISIT
+    data.spend||'0',  // 11: TOTAL SPEND
+    fmtD(fuH3),       // 12: FU H+3
+    'belum',          // 13: STATUS H+3
+    fmtD(fuH21),      // 14: FU H+21
+    'belum',          // 15: STATUS H+21
+    data.loyalty||'', // 16: LOYALTY
+    '0',              // 17: STAMP
+    '','',            // 18-19: REWARD
+    '0',              // 20: REFERAL
+    '','','',         // 21-23
+    data.notes||'',   // 24: NOTES
+    ''                // 25: BEFORE AFTER
   ];
 
   setSyncInfo('⏳ Menyimpan ke Sheets...');
-  toast('⏳ Menyimpan pasien ke Sheets...');
+  toast('⏳ Menyimpan '+data.nama+'...');
 
-  // Kirim via JSONP GET
   try {
+    // Cek panjang URL sebelum kirim
     const payload={action:'append',sheet:'MASTER DATA PASIEN',row:row};
+    const payloadStr=JSON.stringify(payload);
+    const url=getActiveURL()+'?callback=_test&payload='+encodeURIComponent(payloadStr);
+    console.log('📤 Payload size:', payloadStr.length, 'chars | URL length:', url.length);
+
     const result = await postToSheets(payload);
-    if(result&&result.status==='ok'){
-      toast('✅ '+data.nama+' berhasil disimpan ke Sheets!');
-      setSyncInfo('✓ Tersimpan '+new Date().toLocaleTimeString('id-ID'));
-    } else {
-      toast('✅ '+data.nama+' disimpan! (cek Sheets dalam beberapa detik)');
-      setSyncInfo('✓ Tersimpan '+new Date().toLocaleTimeString('id-ID'));
-    }
+    toast('✅ '+data.nama+' berhasil disimpan ke Sheets!');
+    setSyncInfo('✓ Tersimpan '+new Date().toLocaleTimeString('id-ID'));
   } catch(err){
     console.error('Sheets error:',err);
-    toast('⚠️ Tersimpan lokal, gagal sync: '+err.message);
-    setSyncInfo('⚠️ Offline');
+    toast('⚠️ Gagal sync: '+err.message);
+    setSyncInfo('⚠️ Error');
   }
   resetForm();
 }
