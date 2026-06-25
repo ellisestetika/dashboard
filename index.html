@@ -1978,27 +1978,34 @@ async function submitPatient(){
   localStorage.setItem('ellis_today_'+todayKey(),JSON.stringify(todayPatients));
   renderTodayTable();
 
-  const tglDate=new Date(data.tanggal);
+  // Convert tanggal dari YYYY-MM-DD ke DD/MM/YYYY
+  const rawTgl = data.tanggal||'';
+  const tglFormatted = rawTgl.includes('-') ? 
+    rawTgl.split('-').reverse().join('/') : rawTgl;
+  const tglDate=new Date(rawTgl);
   const fuH3=new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
   const fuH21=new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
   const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  // Convert tanggal lahir juga
+  const lahirFormatted = (data.lahir||'').includes('-') ?
+    (data.lahir||'').split('-').reverse().join('/') : (data.lahir||'');
 
   // Kirim data minimal — hanya kolom yang penting
   // Apps Script akan appendRow dengan data ini
   const row=[
-    'BARU',           // 0: NO MEMBER
+    autoGenMember(),  // 0: NO MEMBER (auto-generate)
     data.nama,        // 1: NAMA
     data.hp||'',      // 2: NO HP
-    data.lahir||'',   // 3: TGL LAHIR
+    lahirFormatted,   // 3: TGL LAHIR
     '',               // 4: UMUR
     data.sumber||'',  // 5: SUMBER
     '',               // 6: INSTAGRAM
     data.masalah||'', // 7: MASALAH UTAMA
     '',               // 8: MASALAH KEDUA
-    data.tanggal,     // 9: TERAKHIR DATANG
+    tglFormatted,     // 9: TERAKHIR DATANG
     '1',              // 10: TOTAL VISIT
     data.spend||'0',  // 11: TOTAL SPEND
-    fmtD(fuH3),       // 12: FU H+3
+    fmtD(fuH3),       // 12: FU H+3 (DD/MM/YYYY)
     'belum',          // 13: STATUS H+3
     fmtD(fuH21),      // 14: FU H+21
     'belum',          // 15: STATUS H+21
@@ -2686,6 +2693,24 @@ async function updateTierV4(sel, memberId){
 // UPDATE KUNJUNGAN MEMBER LAMA
 // ══════════════════════════════════════════════════════
 let _updatingRow=null, _updatingRowIdx=-1;
+
+// Auto-generate No Member: 00D + 5 digit, lanjutkan dari yang tertinggi
+function autoGenMember(){
+  if(!masterData || !masterData.length) return 'BARU';
+  const valid = masterData.slice(3).filter(r=>r[1]);
+  let maxNum = 40000;
+  valid.forEach(r=>{
+    const m = String(r[0]||'').trim();
+    // Format 00D44xxx atau 00D40xxx
+    const match = m.match(/00D(\d+)/i);
+    if(match){
+      const num = parseInt(match[1]);
+      if(num > maxNum) maxNum = num;
+    }
+  });
+  const nextNum = maxNum + 1;
+  return '00D' + nextNum;
+}
 
 function bukaModalUpdateByIdx(idx){
   // Cari index sebenarnya di masterData (filtered index → masterData index)
