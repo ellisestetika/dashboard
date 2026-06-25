@@ -1993,29 +1993,29 @@ async function submitPatient(){
   // Kirim data minimal — hanya kolom yang penting
   // Apps Script akan appendRow dengan data ini
   const row=[
-    autoGenMember(),  // 0: NO MEMBER (auto-generate)
-    data.nama,        // 1: NAMA
-    data.hp||'',      // 2: NO HP
-    lahirFormatted,   // 3: TGL LAHIR
-    '',               // 4: UMUR
-    data.sumber||'',  // 5: SUMBER
-    '',               // 6: INSTAGRAM
-    data.masalah||'', // 7: MASALAH UTAMA
-    '',               // 8: MASALAH KEDUA
-    tglFormatted,     // 9: TERAKHIR DATANG
-    '1',              // 10: TOTAL VISIT
-    data.spend||'0',  // 11: TOTAL SPEND
-    fmtD(fuH3),       // 12: FU H+3 (DD/MM/YYYY)
-    'belum',          // 13: STATUS H+3
-    fmtD(fuH21),      // 14: FU H+21
-    'belum',          // 15: STATUS H+21
-    data.loyalty||'', // 16: LOYALTY
-    '0',              // 17: STAMP
-    '','',            // 18-19: REWARD
-    '0',              // 20: REFERAL
-    '','','',         // 21-23
-    data.notes||'',   // 24: NOTES
-    ''                // 25: BEFORE AFTER
+    autoGenMember(),  // 0: A - NO MEMBER (auto-generate)
+    data.nama,        // 1: B - NAMA
+    (()=>{const h=data.hp||'';return h.startsWith('8')?'0'+h:h;})(), // 2: C - NO HP
+    lahirFormatted,   // 3: D - TGL LAHIR
+    '',               // 4: E - UMUR
+    data.sumber||'',  // 5: F - SUMBER
+    data.masalah||'', // 6: G - MASALAH UTAMA
+    '',               // 7: H - MASALAH KEDUA
+    tglFormatted,     // 8: I - TERAKHIR DATANG
+    1,                // 9: J - TOTAL VISIT (angka bukan string)
+    data.spend||'0',  // 10: K - TOTAL SPEND
+    fmtD(fuH3),       // 11: L - FU H+3
+    'belum',          // 12: M - STATUS H+3
+    fmtD(fuH21),      // 13: N - FU H+21
+    'belum',          // 14: O - STATUS H+21
+    data.loyalty||'', // 15: P - LOYALTY
+    0,                // 16: Q - STAMP
+    '',               // 17: R - REWARD 4
+    '',               // 18: S - REWARD 10
+    0,                // 19: T - REFERAL
+    '',               // 20: U - WA GRUP
+    '',               // 21: V - BIRTHDAY FU
+    data.notes||''    // 22: W - NOTES
   ];
 
   setSyncInfo('⏳ Menyimpan ke Sheets...');
