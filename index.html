@@ -1745,6 +1745,8 @@ function openAddContent(dk, idx) {
 }
 
 function saveContent() {
+  if(window._savingContent) return; // guard infinite loop
+  window._savingContent = true;
   captureSnapshot('simpan konten');
   const dk=document.getElementById('m-date-inp').value||currentDK;
   if(!calData[dk]) calData[dk]=[];
@@ -1776,6 +1778,7 @@ function saveContent() {
   }
 
   renderCal(); closeModal('cal-modal'); saveAll(); toast('✓ Konten tersimpan');
+  window._savingContent = false;
 }
 
 function deleteContent() {
@@ -1883,7 +1886,7 @@ function editIdeaLengkap(platform, idx){
   // Simpan referensi ide yang diedit
   window._editingIdea = {platform, idx};
   
-  openModal('cal-modal');
+  document.getElementById('cal-modal').classList.add('open');
 }
 
 function addIgIdea(){ captureSnapshot('tambah ide ig'); igIdeas.push({title:'Ide Konten Baru',hook:'',status:'ide',type:'skit',date:'',platform:'ig'}); renderBankIdeas(); saveAll(); }
