@@ -1997,7 +1997,7 @@ async function submitPatient(){
     data.nama,        // 1: B - NAMA
     (()=>{const h=data.hp||'';return h.startsWith('8')?'0'+h:h;})(), // 2: C - NO HP
     lahirFormatted,   // 3: D - TGL LAHIR
-    '',               // 4: E - UMUR
+    (()=>{const b=parseDate(lahirFormatted);if(!b)return'';const t=new Date();return String(t.getFullYear()-b.getFullYear()-((t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))?1:0));})(), // 4: E - UMUR
     data.sumber||'',  // 5: F - SUMBER
     data.masalah||'', // 6: G - MASALAH UTAMA
     '',               // 7: H - MASALAH KEDUA
@@ -2546,24 +2546,32 @@ function renderBdayTable(){
 async function syncFU(){
   if(!masterData.length) await syncMaster();
   const today=new Date();
-  fuData=masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA'&&r[8]).map(r=>{
+  const today90 = new Date(); today90.setDate(today90.getDate()-90);
+  fuData=masterData.slice(3).filter(r=>{
+    if(!r[1]||String(r[1]).trim()===''||String(r[1]).trim()==='NAMA') return false;
+    // Hanya pasien yang punya FU date di Sheets ATAU kunjungan dalam 90 hari
+    const hasFUDate = r[11] && String(r[11]).trim() && String(r[11]).trim()!=='-';
+    const lastVisit = parseDate(r[8]);
+    const recentVisit = lastVisit && lastVisit >= today90;
+    return hasFUDate || recentVisit;
+  }).map(r=>{
     const lastVisit=parseDate(r[8]);
     if(!lastVisit) return null;
     const d3=new Date(lastVisit); d3.setDate(d3.getDate()+3);
     const d21=new Date(lastVisit); d21.setDate(d21.getDate()+21);
-    // Kolom baru: 11=FU H+3, 12=STATUS H+3, 13=FU H+21, 14=STATUS H+21
     return {
       nama:r[1], hp:r[2],
       treatment:(r[6]||'-').toString().substring(0,40),
       tglTreatment:fmtDate(r[8]),
-      fuH3:r[11]||fmtDate(d3),
-      fuH21:r[13]||fmtDate(d21),
-      fuStatus:r[12]||'Belum',
-      fuStatus21:r[14]||'Belum',
+      fuH3:r[11]&&String(r[11]).trim()&&r[11]!=='-' ? r[11] : fmtDate(d3),
+      fuH21:r[13]&&String(r[13]).trim()&&r[13]!=='-' ? r[13] : fmtDate(d21),
+      fuStatus:(r[12]||'belum').toLowerCase(),
+      fuStatus21:(r[14]||'belum').toLowerCase(),
       fuLast:r[11]||'-',
       balik:'Belum',
       loyalty:r[15]||'',
-      stamp:r[16]||'0'
+      stamp:r[16]||'0',
+      rowIdx:masterData.indexOf(r)
     };
   }).filter(Boolean);
   const todayMs = new Date().setHours(0,0,0,0);
@@ -2609,9 +2617,9 @@ function filterFU(){
     <td style="font-size:10px">${r.treatment}</td>
     <td style="font-size:10px">${r.tglTreatment}</td>
     <td style="font-size:10px;${h3Late?'color:#E74C3C;font-weight:700':''}">${r.fuH3}</td>
-    <td><span class="badge b-${r.fuStatus==='sudah'||r.fuStatus==='Sudah'?'green':h3Late?'red':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus||'Belum'}</span></td>
+    <td><span class="badge b-${r.fuStatus==='sudah'?'green':h3Late?'red':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus==='sudah'?'Sudah':'Belum'}</span></td>
     <td style="font-size:10px;${h21Late?'color:#E74C3C;font-weight:700':''}">${r.fuH21}</td>
-    <td><span class="badge b-${r.fuStatus21==='sudah'||r.fuStatus21==='Sudah'?'green':h21Late?'red':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus21||'Belum'}</span></td>
+    <td><span class="badge b-${r.fuStatus21==='sudah'?'green':h21Late?'red':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus21==='sudah'?'Sudah':'Belum'}</span></td>
     <td><a href="https://wa.me/62${waNum(r.hp)}?text=${waText(r.nama,'h3')}" target="_blank" style="background:var(--green);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 WA</a></td>
   </tr>`;
   }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada data</td></tr>';
@@ -3138,6 +3146,12 @@ function renderMasterTable(){
     <td><strong>${r[1]}</strong></td>
     <td style="font-size:10px">${r[2]||'-'}</td>
     <td style="font-size:10px">${fmtDate(r[3])}</td>
+    <td style="font-size:10px;color:var(--gray);text-align:center">${(()=>{
+      const u=parseInt(r[4]);if(u>0&&u<120)return u+'th';
+      const b=parseDate(r[3]);if(!b)return'-';
+      const today=new Date();
+      return (today.getFullYear()-b.getFullYear()-((today.getMonth()<b.getMonth()||(today.getMonth()===b.getMonth()&&today.getDate()<b.getDate()))?1:0))+'th';
+    })()}</td>
     <td><span class="badge b-blue" style="font-size:9px">${r[5]&&String(r[5]).trim()&&r[5]!==''?r[5]:'-'}</span></td>
     <td style="font-size:10px">${(r[6]||'-').toString().substring(0,25)}</td>
     <td style="font-size:10px">${fmtDate(r[8])}</td>
