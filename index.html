@@ -2546,14 +2546,16 @@ function renderBdayTable(){
 async function syncFU(){
   if(!masterData.length) await syncMaster();
   const today=new Date();
-  const today90 = new Date(); today90.setDate(today90.getDate()-90);
   fuData=masterData.slice(3).filter(r=>{
     if(!r[1]||String(r[1]).trim()===''||String(r[1]).trim()==='NAMA') return false;
-    // Hanya pasien yang punya FU date di Sheets ATAU kunjungan dalam 90 hari
-    const hasFUDate = r[11] && String(r[11]).trim() && String(r[11]).trim()!=='-';
+    // Tampilkan pasien yang punya FU date DI SHEETS
+    const hasFUDate = r[11] && String(r[11]).trim() && String(r[11]).trim()!=='-' && String(r[11]).trim()!=='0';
+    if(hasFUDate) return true;
+    // ATAU kunjungan dalam 365 hari terakhir
     const lastVisit = parseDate(r[8]);
-    const recentVisit = lastVisit && lastVisit >= today90;
-    return hasFUDate || recentVisit;
+    if(!lastVisit) return false;
+    const daysDiff = Math.floor((new Date()-lastVisit)/86400000);
+    return daysDiff >= 0 && daysDiff <= 365;
   }).map(r=>{
     const lastVisit=parseDate(r[8]);
     if(!lastVisit) return null;
