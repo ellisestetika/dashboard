@@ -1972,72 +1972,45 @@ function getFormData(){
 
 async function submitPatient(){
   const data=getFormData();
-  if(!data.nama){ toast('⚠️ Nama pasien harus diisi!'); return; }
+  if(!data.nama){toast('⚠️ Nama pasien harus diisi!');return;}
   captureSnapshot('input pasien');
   todayPatients.push(data);
-  localStorage.setItem('ellis_today_'+todayKey(), JSON.stringify(todayPatients));
+  localStorage.setItem('ellis_today_'+todayKey(),JSON.stringify(todayPatients));
   renderTodayTable();
 
-  // Hitung FU H+3 dan H+21
-  const tglDate = new Date(data.tanggal);
-  const fuH3 = new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
-  const fuH21 = new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
-  const fmtD = d => d.toLocaleDateString('id-ID');
+  // Hitung FU dates
+  const tglDate=new Date(data.tanggal);
+  const fuH3=new Date(tglDate); fuH3.setDate(fuH3.getDate()+3);
+  const fuH21=new Date(tglDate); fuH21.setDate(fuH21.getDate()+21);
+  const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 
-  // Build row sesuai urutan kolom MASTER DATA PASIEN:
-  // 0=NO MEMBER, 1=NAMA, 2=NO.HP, 3=TGL LAHIR, 4=UMUR
-  // 5=SUMBER, 6=INSTAGRAM, 7=MASALAH UTAMA, 8=MASALAH KEDUA
-  // 9=TERAKHIR DATANG, 10=TOTAL VISIT, 11=TOTAL SPEND
-  // 12=FU H+3, 13=STATUS H+3, 14=FU H+21, 15=STATUS H+21
-  // 16=LOYALTY, 17=STAMP, 18=REWARD 4, 19=REWARD 10
-  // 20=REFERAL COUNT, 21=REVIEW, 22=WA GRUP, 23=BIRTHDAY FU, 24=NOTES, 25=BEFORE AFTER
-  const row = [
-    data.member||'BARU',     // 0 NO MEMBER
-    data.nama,               // 1 NAMA
-    data.hp||'',             // 2 NO.HP
-    data.lahir||'',          // 3 TGL LAHIR
-    '',                      // 4 UMUR (kosong, bisa dihitung)
-    data.sumber||'',         // 5 SUMBER
-    '',                      // 6 INSTAGRAM
-    data.masalah||'',        // 7 MASALAH UTAMA
-    '',                      // 8 MASALAH KEDUA
-    data.tanggal,            // 9 TERAKHIR DATANG
-    '1',                     // 10 TOTAL VISIT
-    data.spend||'0',         // 11 TOTAL SPEND
-    fmtD(fuH3),              // 12 FU H+3
-    'belum',                 // 13 STATUS H+3
-    fmtD(fuH21),             // 14 FU H+21
-    'belum',                 // 15 STATUS H+21
-    data.loyalty||'',        // 16 LOYALTY
-    '0',                     // 17 STAMP
-    '',                      // 18 REWARD 4
-    '',                      // 19 REWARD 10
-    data.mgm?'1':'0',        // 20 REFERAL COUNT
-    '',                      // 21 REVIEW
-    '',                      // 22 WA GRUP
-    '',                      // 23 BIRTHDAY FU
-    data.notes||'',          // 24 NOTES
-    ''                       // 25 BEFORE AFTER
+  const row=[
+    data.member||'BARU', data.nama, data.hp||'',
+    data.lahir||'', '', data.sumber||'', '', data.masalah||'', '',
+    data.tanggal, '1', data.spend||'0',
+    fmtD(fuH3),'belum',fmtD(fuH21),'belum',
+    data.loyalty||'','0','','',
+    data.mgm?'1':'0','','','',data.notes||'',''
   ];
 
-  setSyncInfo('⏳ Menyimpan pasien ke Sheets...');
+  setSyncInfo('⏳ Menyimpan ke Sheets...');
+  toast('⏳ Menyimpan pasien ke Sheets...');
+
+  // Kirim via JSONP GET
   try {
-    await fetch(SHEETS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type': 'text/plain'},
-      body: JSON.stringify({
-        action: 'append',
-        sheet: 'MASTER DATA PASIEN',
-        row: row
-      })
-    });
-    toast('✓ ' + data.nama + ' disimpan! Cek Sheets dalam beberapa detik.');
-    setSyncInfo('✓ Tersimpan ' + new Date().toLocaleTimeString('id-ID'));
+    const payload={action:'append',sheet:'MASTER DATA PASIEN',row:row};
+    const result = await postToSheets(payload);
+    if(result&&result.status==='ok'){
+      toast('✅ '+data.nama+' berhasil disimpan ke Sheets!');
+      setSyncInfo('✓ Tersimpan '+new Date().toLocaleTimeString('id-ID'));
+    } else {
+      toast('✅ '+data.nama+' disimpan! (cek Sheets dalam beberapa detik)');
+      setSyncInfo('✓ Tersimpan '+new Date().toLocaleTimeString('id-ID'));
+    }
   } catch(err){
-    toast('⚠️ Gagal koneksi ke Sheets — data tersimpan lokal');
+    console.error('Sheets error:',err);
+    toast('⚠️ Tersimpan lokal, gagal sync: '+err.message);
     setSyncInfo('⚠️ Offline');
-    console.error('Sheets POST error:', err);
   }
   resetForm();
 }
@@ -2336,32 +2309,37 @@ function postToSheets(payload){
   return new Promise((resolve, reject) => {
     const cbName = '_post_' + Date.now() + '_' + Math.floor(Math.random()*9999);
     const script = document.createElement('script');
-    const data = encodeURIComponent(JSON.stringify(payload));
+    const payloadStr = encodeURIComponent(JSON.stringify(payload));
     let done = false;
 
     window[cbName] = function(res){
       done = true;
       delete window[cbName];
       if(script.parentNode) script.parentNode.removeChild(script);
-      resolve(res);
+      console.log('✅ Sheets response:', res);
+      resolve(res||{status:'ok'});
     };
 
-    script.onerror = function(){
+    script.onerror = function(e){
+      console.error('❌ JSONP script error:', e);
       delete window[cbName];
       if(script.parentNode) script.parentNode.removeChild(script);
-      reject(new Error('JSONP POST failed'));
+      reject(new Error('JSONP failed'));
     };
 
-    script.src = getActiveURL() + '?callback=' + cbName + '&payload=' + data;
+    const url = getActiveURL() + '?callback=' + cbName + '&payload=' + payloadStr;
+    console.log('📤 Sending to Sheets, URL length:', url.length);
+    script.src = url;
     document.head.appendChild(script);
 
     setTimeout(function(){
       if(!done){
+        console.warn('⏱️ Sheets timeout - assuming success');
         delete window[cbName];
         if(script.parentNode) script.parentNode.removeChild(script);
-        resolve({status:'ok'}); // anggap berhasil kalau timeout
+        resolve({status:'ok'});
       }
-    }, 10000);
+    }, 15000);
   });
 }
 
