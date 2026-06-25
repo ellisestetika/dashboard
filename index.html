@@ -1944,7 +1944,7 @@ function getFormData(){
   if(fuType==='standard'){
     const d3=new Date(d); d3.setDate(d3.getDate()+3);
     const d21=new Date(d); d21.setDate(d21.getDate()+21);
-    fuSched=`H+3: ${d3.toISOString().slice(0,10)} | H+21: ${d21.toISOString().slice(0,10)}`;
+    fuSched=`H+3: ${fmtDate(d3)} | H+21: ${fmtDate(d21)}`;
   } else if(fuType==='biweekly'){
     const d14=new Date(d); d14.setDate(d14.getDate()+14);
     fuSched=`Tiap 2 minggu, mulai: ${d14.toISOString().slice(0,10)}`;
@@ -2556,8 +2556,8 @@ async function syncFU(){
       nama:r[1], hp:r[2],
       treatment:(r[6]||'-').toString().substring(0,40),
       tglTreatment:fmtDate(r[8]),
-      fuH3:r[11]||d3.toISOString().slice(0,10),
-      fuH21:r[13]||d21.toISOString().slice(0,10),
+      fuH3:r[11]||fmtDate(d3),
+      fuH21:r[13]||fmtDate(d21),
       fuStatus:r[12]||'Belum',
       fuStatus21:r[14]||'Belum',
       fuLast:r[11]||'-',
@@ -2566,9 +2566,12 @@ async function syncFU(){
       stamp:r[16]||'0'
     };
   }).filter(Boolean);
+  const todayMs = new Date().setHours(0,0,0,0);
   const fuPending = fuData.filter(r=>{
-    const h3Late = r.fuH3 && r.fuH3 < todayStr() && r.fuStatus.toLowerCase()!=='sudah';
-    const h21Late = r.fuH21 && r.fuH21 < todayStr() && r.fuStatus21.toLowerCase()!=='sudah';
+    const d3 = parseDate(r.fuH3);
+    const d21 = parseDate(r.fuH21);
+    const h3Late = d3 && d3.getTime() <= todayMs && r.fuStatus.toLowerCase()!=='sudah';
+    const h21Late = d21 && d21.getTime() <= todayMs && r.fuStatus21.toLowerCase()!=='sudah';
     return h3Late || h21Late;
   });
   document.getElementById('fu-total').textContent=fuData.length;
@@ -2594,8 +2597,11 @@ function filterFU(){
   const tbody=document.getElementById('fu-tbody'); if(!tbody) return;
   const todayDateStr = todayStr();
   tbody.innerHTML=data.slice(0,100).map(r=>{
-    const h3Late = r.fuH3 && r.fuH3 < todayDateStr && r.fuStatus.toLowerCase()!=='sudah';
-    const h21Late = r.fuH21 && r.fuH21 < todayDateStr && r.fuStatus21.toLowerCase()!=='sudah';
+    const todayMs2 = new Date().setHours(0,0,0,0);
+    const d3p = parseDate(r.fuH3);
+    const d21p = parseDate(r.fuH21);
+    const h3Late = d3p && d3p.getTime() <= todayMs2 && r.fuStatus.toLowerCase()!=='sudah';
+    const h21Late = d21p && d21p.getTime() <= todayMs2 && r.fuStatus21.toLowerCase()!=='sudah';
     const rowBg = (h3Late||h21Late) ? 'background:#FFF0F0' : '';
     return `<tr style="${rowBg}">
     <td><strong>${r.nama}</strong>${h3Late||h21Late?'<span style="color:#E74C3C;font-size:9px;margin-left:4px">⚠️ Terlambat</span>':''}</td>
