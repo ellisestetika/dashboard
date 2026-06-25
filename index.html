@@ -562,10 +562,11 @@ body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--dark);f
   <div class="card">
     <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
       <select id="fu-filter" class="f-select" style="max-width:160px" onchange="filterFU()">
-        <option value="all">Semua</option>
+        <option value="pending">Belum Di-FU</option>
+        <option value="today">FU Hari Ini 📅</option>
         <option value="h3">H+3 Jatuh Tempo</option>
         <option value="h21">H+21 Jatuh Tempo</option>
-        <option value="pending">Belum Di-FU</option>
+        <option value="all">Semua</option>
         <option value="done">Sudah Di-FU</option>
       </select>
     </div>
@@ -1805,10 +1806,12 @@ function renderIdeaList(containerId, ideas, platform, color) {
         <div class="idea-meta">
           <span class="badge" style="background:${color};color:white;cursor:default">${idea.type||'Ide'}</span>
           <span class="badge b-${idea.status==='posted'?'green':idea.status==='siap'?'blue':'gold'}" onclick="cycleIdeaStatus('${platform}',${i},this)">${idea.status||'Ide'}</span>
+          <button onclick="editIdeaLengkap('${platform}',${i})" style="background:#2980B9;color:white;border:none;padding:2px 7px;border-radius:4px;font-size:9px;cursor:pointer;margin-right:3px">✏️ Edit</button>
           <button class="idea-del-btn" onclick="deleteIdea('${platform}',${i})">✕</button>
         </div>
       </div>
       <div style="font-size:11px;color:var(--gray);margin-bottom:6px" contenteditable onblur="updateIdeaField('${platform}',${i},'hook',this.innerText)">${idea.hook||'Hook / notes...'}</div>
+      ${idea.caption?`<div style="font-size:10px;color:var(--brown);background:var(--gold-p);padding:4px 8px;border-radius:6px;margin-bottom:6px">${idea.caption.substring(0,80)}${idea.caption.length>80?'...':''}</div>`:''}
       <div class="idea-date-wrap">
         <span style="font-size:11px;color:var(--dark)">📅 Jadwalkan:</span>
         <input type="date" class="idea-date-inp" value="${idea.date||''}" onchange="updateIdeaDate('${platform}',${i},this.value)">
@@ -1819,6 +1822,73 @@ function renderIdeaList(containerId, ideas, platform, color) {
 }
 
 function getIdeaArr(platform){ return platform==='ig'?igIdeas:platform==='tt'?ttIdeas:thIdeas; }
+
+// Edit ide dengan modal kalender yang lengkap
+function editIdeaLengkap(platform, idx){
+  const ideas = platform==='ig'?igIdeas:platform==='tt'?ttIdeas:thIdeas;
+  const idea = ideas[idx];
+  if(!idea) return;
+  
+  // Pre-fill modal kalender dengan data dari ide
+  const dk = idea.date || todayStr();
+  currentDK = dk;
+  currentIdx = null; // buat entri baru di kalender
+  
+  const dateInp = document.getElementById('m-date-inp');
+  if(dateInp) dateInp.value = dk;
+  
+  const dateDisp = document.getElementById('m-date-disp');
+  if(dateDisp) dateDisp.textContent = 'Tanggal: ' + dk;
+  
+  // Set platform
+  const platEl = document.getElementById('m-plat');
+  if(platEl) platEl.value = platform==='tt'?'tt':platform==='th'?'th':'ig';
+  
+  // Set type
+  const typeEl = document.getElementById('m-type');
+  if(typeEl) typeEl.value = idea.type || 'skit';
+  
+  // Set fields
+  const titleEl = document.getElementById('m-title');
+  if(titleEl) titleEl.value = idea.title || '';
+  
+  const hookEl = document.getElementById('m-hook');
+  if(hookEl) hookEl.value = idea.hook || '';
+  
+  const captionEl = document.getElementById('m-caption');
+  if(captionEl) captionEl.value = idea.caption || '';
+  
+  const statusEl = document.getElementById('m-status');
+  if(statusEl) statusEl.value = idea.status || 'ide';
+  
+  const viewsEl = document.getElementById('m-views');
+  if(viewsEl) viewsEl.value = idea.views || '-';
+  
+  // Simpan referensi ide yang diedit
+  window._editingIdea = {platform, idx};
+  
+  openModal('cal-modal');
+}
+
+// Override saveContent untuk update ide juga jika diedit dari ide
+const _origSaveContent = saveContent;
+function saveContent(){
+  _origSaveContent();
+  // Jika diedit dari ide, update data ide juga
+  if(window._editingIdea){
+    const {platform, idx} = window._editingIdea;
+    const ideas = platform==='ig'?igIdeas:platform==='tt'?ttIdeas:thIdeas;
+    if(ideas[idx]){
+      ideas[idx].title = document.getElementById('m-title')?.value || ideas[idx].title;
+      ideas[idx].hook = document.getElementById('m-hook')?.value || ideas[idx].hook;
+      ideas[idx].caption = document.getElementById('m-caption')?.value || ideas[idx].caption;
+      ideas[idx].status = document.getElementById('m-status')?.value || ideas[idx].status;
+      ideas[idx].type = document.getElementById('m-type')?.value || ideas[idx].type;
+      renderBankIdeas();
+    }
+    window._editingIdea = null;
+  }
+}
 
 function addIgIdea(){ captureSnapshot('tambah ide ig'); igIdeas.push({title:'Ide Konten Baru',hook:'',status:'ide',type:'skit',date:'',platform:'ig'}); renderBankIdeas(); saveAll(); }
 function addTTIdea(){ captureSnapshot('tambah ide tt'); ttIdeas.push({title:'Ide Konten Baru',hook:'',status:'ide',type:'skit',date:'',platform:'tt'}); renderBankIdeas(); saveAll(); }
@@ -2584,6 +2654,9 @@ async function syncFU(){
     const h21Late = d21 && d21.getTime() <= todayMs && r.fuStatus21.toLowerCase()!=='sudah';
     return h3Late || h21Late;
   });
+  // Set default filter ke Belum Di-FU
+  const fuSel = document.getElementById('fu-filter');
+  if(fuSel && fuSel.value==='all') fuSel.value='pending';
   document.getElementById('fu-total').textContent=fuData.length;
   document.getElementById('fu-done').textContent=fuData.filter(r=>r.fuStatus==='Sudah').length;
   // Update sidebar badge FU dengan jumlah yang perlu di-FU hari ini
@@ -2599,11 +2672,20 @@ function filterFU(){
   const f=document.getElementById('fu-filter')?.value||'all';
   const todayS=todayStr();
   let data=fuData;
-  if(f==='h3') data=fuData.filter(r=>r.fuH3<=todayS);
-  else if(f==='h21') data=fuData.filter(r=>r.fuH21<=todayS);
-  else if(f==='biweekly') data=fuData; // all for now
-  else if(f==='pending') data=fuData.filter(r=>r.fuStatus!=='Sudah');
-  else if(f==='done') data=fuData.filter(r=>r.fuStatus==='Sudah');
+  const todayDate = new Date().setHours(0,0,0,0);
+  const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate()+1); tomorrowDate.setHours(0,0,0,0);
+  if(f==='today'){
+    data=fuData.filter(r=>{
+      const d3=parseDate(r.fuH3); const d21=parseDate(r.fuH21);
+      const h3Today=d3&&d3.getTime()>=todayDate&&d3.getTime()<tomorrowDate.getTime()&&r.fuStatus!=='sudah';
+      const h21Today=d21&&d21.getTime()>=todayDate&&d21.getTime()<tomorrowDate.getTime()&&r.fuStatus21!=='sudah';
+      return h3Today||h21Today;
+    });
+  }
+  else if(f==='h3') data=fuData.filter(r=>{const d=parseDate(r.fuH3);return d&&d.getTime()<=todayDate&&r.fuStatus!=='sudah';});
+  else if(f==='h21') data=fuData.filter(r=>{const d=parseDate(r.fuH21);return d&&d.getTime()<=todayDate&&r.fuStatus21!=='sudah';});
+  else if(f==='pending') data=fuData.filter(r=>r.fuStatus!=='sudah'||r.fuStatus21!=='sudah');
+  else if(f==='done') data=fuData.filter(r=>r.fuStatus==='sudah'&&r.fuStatus21==='sudah');
   const tbody=document.getElementById('fu-tbody'); if(!tbody) return;
   const todayDateStr = todayStr();
   tbody.innerHTML=data.slice(0,100).map(r=>{
@@ -2818,9 +2900,12 @@ async function simpanUpdateKunjungan(){
   const sheetRow=_updatingRowIdx+1;
   try {
     const updates=[
-      {colIndex:10,value:fmtTgl},{colIndex:11,value:newVisit},
-      {colIndex:13,value:fmtD(fuH3)},{colIndex:14,value:'belum'},
-      {colIndex:15,value:fmtD(fuH21)},{colIndex:16,value:'belum'},
+      {colIndex:9,value:fmtTgl},       // I: TERAKHIR DATANG
+      {colIndex:10,value:newVisit},     // J: TOTAL VISIT
+      {colIndex:12,value:fmtD(fuH3)},  // L: FU H+3
+      {colIndex:13,value:'belum'},      // M: STATUS H+3
+      {colIndex:14,value:fmtD(fuH21)}, // N: FU H+21
+      {colIndex:15,value:'belum'},      // O: STATUS H+21
     ];
     if(masalah) updates.push({colIndex:8,value:masalah});
     if(loyalty) updates.push({colIndex:17,value:loyalty});
