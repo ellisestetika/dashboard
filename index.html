@@ -2620,11 +2620,11 @@ async function syncFU(){
     // Tampilkan pasien yang punya FU date DI SHEETS
     const hasFUDate = r[11] && String(r[11]).trim() && String(r[11]).trim()!=='-' && String(r[11]).trim()!=='0';
     if(hasFUDate) return true;
-    // ATAU kunjungan dalam 365 hari terakhir
+    // ATAU kunjungan dalam 30 hari terakhir (wajib di-FU)
     const lastVisit = parseDate(r[8]);
     if(!lastVisit) return false;
     const daysDiff = Math.floor((new Date()-lastVisit)/86400000);
-    return daysDiff >= 0 && daysDiff <= 365;
+    return daysDiff >= 0 && daysDiff <= 30;
   }).map(r=>{
     const lastVisit=parseDate(r[8]);
     if(!lastVisit) return null;
@@ -2657,13 +2657,13 @@ async function syncFU(){
   const fuSel = document.getElementById('fu-filter');
   if(fuSel && fuSel.value==='all') fuSel.value='pending';
   document.getElementById('fu-total').textContent=fuData.length;
-  document.getElementById('fu-done').textContent=fuData.filter(r=>r.fuStatus==='Sudah').length;
+  document.getElementById('fu-done').textContent=fuData.filter(r=>r.fuStatus==='sudah'&&r.fuStatus21==='sudah').length;
   // Update sidebar badge FU dengan jumlah yang perlu di-FU hari ini
   const sbFU = document.getElementById('sb-fu');
   if(sbFU) sbFU.textContent = fuPending.length;
-  document.getElementById('fu-pending').textContent=fuData.filter(r=>r.fuStatus!=='Sudah').length;
+  document.getElementById('fu-pending').textContent=fuData.filter(r=>r.fuStatus!=='sudah'||r.fuStatus21!=='sudah').length;
   document.getElementById('fu-balik').textContent=fuData.filter(r=>r.balik==='Sudah').length;
-  document.getElementById('sb-fu').textContent=fuData.filter(r=>r.fuStatus!=='Sudah').length;
+  document.getElementById('sb-fu').textContent=fuPending.length;
   filterFU();
 }
 
@@ -3131,13 +3131,13 @@ async function saveFUStatusToSheets(){
 
     try {
       const promises=[];
-      if(statusH3&&statusH3!==currH3){
-        promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:statusH3})}));
-        masterData[rowIdx][13]=statusH3;
+      if(statusH3&&statusH3.toLowerCase()!==currH3.toLowerCase()){
+        promises.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:13,value:statusH3.toLowerCase()}));
+        masterData[rowIdx][12]=statusH3;
       }
-      if(statusH21&&statusH21!==currH21){
-        promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:statusH21})}));
-        masterData[rowIdx][15]=statusH21;
+      if(statusH21&&statusH21.toLowerCase()!==currH21.toLowerCase()){
+        promises.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:15,value:statusH21.toLowerCase()}));
+        masterData[rowIdx][14]=statusH21;
       }
       if(promises.length){ await Promise.all(promises); success++; }
     } catch(e){ fail++; }
