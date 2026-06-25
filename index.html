@@ -3479,21 +3479,42 @@ function toggleFUStatus(el){
   const next=(i+1)%statuses.length;
   el.textContent=statuses[next];
   el.className='badge '+badges[next];
-  // Isi tanggal FU otomatis kalau jadi Sudah
-  const row=el.closest('tr');
-  if(row&&statuses[next]==='Sudah'){
-    const cells=row.querySelectorAll('td');
-    // Cari cell yang contentEditable untuk tgl FU
-    for(let c of cells){
-      if(c.contentEditable==='true'&&(!c.textContent||c.textContent==='-')){
-        c.textContent=todayStr(); break;
-      }
-    }
-  }
   saveAll();
-  // Tampilkan hint sync
-  const syncHint = document.getElementById('fu-sync-hint');
-  if(syncHint) syncHint.style.display='inline-flex';
+
+  // Auto-sync ke Sheets langsung
+  const row=el.closest('tr');
+  if(!row) return;
+  const cells=row.querySelectorAll('td');
+  const nama=cells[0]?.querySelector('strong')?.textContent?.trim()||'';
+  if(!nama||!masterData.length) return;
+
+  // Cari row di masterData
+  const rowIdx=masterData.findIndex(r=>String(r[1]).trim()===nama);
+  if(rowIdx<0) return;
+
+  // Tentukan apakah ini H+3 atau H+21 berdasarkan posisi badge di row
+  const allBadges=[...row.querySelectorAll('.badge[onclick*="toggleFUStatus"]')];
+  const badgeIdx=allBadges.indexOf(el);
+  const isH3=badgeIdx===0;
+  const colIndex=isH3?13:15; // M=13=STATUS H+3, O=15=STATUS H+21
+  const newVal=statuses[next].toLowerCase()==='sudah'?'sudah':'belum';
+
+  // Update masterData lokal
+  if(isH3) masterData[rowIdx][12]=statuses[next];
+  else masterData[rowIdx][14]=statuses[next];
+
+  // Kirim ke Sheets
+  postToSheets({
+    action:'update_cell',
+    sheet:'MASTER DATA PASIEN',
+    rowIndex:rowIdx+1,
+    colIndex:colIndex,
+    value:newVal
+  }).then(()=>{
+    toast(`✅ Status FU ${isH3?'H+3':'H+21'} ${nama} → ${statuses[next]}`);
+  }).catch(()=>{
+    toast(`⚠️ Tersimpan lokal, Sheets gagal`);
+  });
 }
 function toggleDatangStatus(el){
   const s=el.textContent==='Belum'?'Sudah':'Belum';
