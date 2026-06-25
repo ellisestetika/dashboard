@@ -2110,10 +2110,10 @@ async function syncSemuaKeSheets(){
       const klaim10 = tr.querySelector('td:nth-child(9) .badge')?.innerText?.includes('Sudah');
       const sheetRow = rowIdx + 1;
       const ps = [];
-      if(tier) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier}));
-      if(stamp>=0) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp}));
-      if(klaim4) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'}));
-      if(klaim10) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'}));
+      if(tier) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:16,value:tier}));   // P
+      if(stamp>=0) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:stamp})); // Q
+      if(klaim4) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:'sudah'})); // R
+      if(klaim10) ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:'sudah'})); // S
       await Promise.all(ps);
       loyaltyCount++;
     }
@@ -2133,12 +2133,12 @@ async function syncSemuaKeSheets(){
       const stH21 = tr.querySelector('td:nth-child(8) .badge')?.innerText?.trim()||'';
       const ps = [];
       if(stH3 && stH3 !== String(masterData[rowIdx][13]||'').trim()){
-        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:14,value:stH3}));
-        masterData[rowIdx][13] = stH3;
+        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:13,value:stH3}));
+        masterData[rowIdx][12] = stH3;
       }
-      if(stH21 && stH21 !== String(masterData[rowIdx][15]||'').trim()){
-        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:stH21}));
-        masterData[rowIdx][15] = stH21;
+      if(stH21 && stH21 !== String(masterData[rowIdx][14]||'').trim()){
+        ps.push(postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:15,value:stH21}));
+        masterData[rowIdx][14] = stH21;
       }
       if(ps.length){ await Promise.all(ps); fuCount++; }
     }
@@ -2157,7 +2157,7 @@ async function syncSemuaKeSheets(){
       const notes = tr.querySelectorAll('td')[12]?.innerText?.trim()||'';
       const curr = String(masterData[rowIdx][24]||'').trim();
       if(notes !== curr){
-        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:25,value:notes});
+        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:23,value:notes}); // W=NOTES
         masterData[rowIdx][24] = notes;
         notesCount++;
       }
@@ -2180,7 +2180,7 @@ async function syncSemuaKeSheets(){
         if(rowIdx>=0){
           // Hitung berapa kali pasien ini bawa teman
           const count = Array.from(mgmRows).filter(r=>r.querySelectorAll('td')[0]?.innerText?.trim()===pasienBawa).length;
-          await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:count});
+          await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:20,value:count});
           masterData[rowIdx][20] = count;
           mgmCount++;
         }
@@ -2411,9 +2411,9 @@ function processMasterData(data){
   const valid = masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA');
   const sbTotal=document.getElementById('sb-total'); if(sbTotal) sbTotal.textContent=valid.length;
   const today=new Date();
-  const mpActive=document.getElementById('mp-active'); if(mpActive) mpActive.textContent=valid.filter(r=>{const d=parseDate(r[9]);return d&&(today-d)/86400000<=30;}).length;
-  const mpInactive=document.getElementById('mp-inactive'); if(mpInactive) mpInactive.textContent=valid.filter(r=>{const d=parseDate(r[9]);return !d||(today-d)/86400000>=90;}).length;
-  const mpNew=document.getElementById('mp-new'); if(mpNew) mpNew.textContent=valid.filter(r=>{const d=parseDate(r[9]);return d&&d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();}).length;
+  const mpActive=document.getElementById('mp-active'); if(mpActive) mpActive.textContent=valid.filter(r=>{const d=parseDate(r[8]);return d&&(today-d)/86400000<=30;}).length;
+  const mpInactive=document.getElementById('mp-inactive'); if(mpInactive) mpInactive.textContent=valid.filter(r=>{const d=parseDate(r[8]);return !d||(today-d)/86400000>=90;}).length;
+  const mpNew=document.getElementById('mp-new'); if(mpNew) mpNew.textContent=valid.filter(r=>{const d=parseDate(r[8]);return d&&d.getMonth()===today.getMonth()&&d.getFullYear()===today.getFullYear();}).length;
   renderMasterTable();
   setSyncInfo('✓ '+valid.length+' pasien — '+new Date().toLocaleTimeString('id-ID'));
   toast('✓ '+valid.length+' pasien berhasil dimuat!');
@@ -2453,8 +2453,8 @@ function loadManualJSON(){
 async function syncInactive(){
   if(!masterData.length) await syncMaster();
   const today=new Date();
-  inactiveData=masterData.slice(3).filter(r=>r[1]&&r[9]).map(r=>{
-    const last=parseDate(r[9]);
+  inactiveData=masterData.slice(3).filter(r=>r[1]&&r[8]).map(r=>{
+    const last=parseDate(r[8]);
     const days=last?Math.floor((today-last)/86400000):999;
     return {...r,_days:days,_last:last};
   }).filter(r=>r._days>=30).sort((a,b)=>b._days-a._days);
@@ -2496,7 +2496,7 @@ async function syncBirthday(){
   if(!masterData.length) await syncMaster();
   const sel=document.getElementById('bday-month-sel'); if(!sel) return;
   const targetMonth=parseInt(sel.value);
-  // r[3]=TANGGAL LAHIR, r[1]=NAMA, r[2]=HP, r[16]=LOYALTY, r[9]=TERAKHIR DATANG
+  // r[3]=TANGGAL LAHIR, r[1]=NAMA, r[2]=HP, r[15]=LOYALTY, r[8]=TERAKHIR DATANG
   bdayData=masterData.slice(3).filter(r=>{
     if(!r[1]||String(r[1]).trim()===''||String(r[1]).trim()==='NAMA') return false;
     if(!r[3]||String(r[3]).trim()===''||isNaN(Number(r[3])?.toString()?.replace(/\//g,''))) {
@@ -2546,28 +2546,36 @@ function renderBdayTable(){
 async function syncFU(){
   if(!masterData.length) await syncMaster();
   const today=new Date();
-  fuData=masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA'&&r[9]).map(r=>{
-    const lastVisit=parseDate(r[9]);
+  fuData=masterData.slice(3).filter(r=>r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='NAMA'&&r[8]).map(r=>{
+    const lastVisit=parseDate(r[8]);
     if(!lastVisit) return null;
     const d3=new Date(lastVisit); d3.setDate(d3.getDate()+3);
     const d21=new Date(lastVisit); d21.setDate(d21.getDate()+21);
-    // Kolom: 12=FU H+3 date, 13=STATUS H+3, 14=FU H+21 date, 15=STATUS H+21
+    // Kolom baru: 11=FU H+3, 12=STATUS H+3, 13=FU H+21, 14=STATUS H+21
     return {
       nama:r[1], hp:r[2],
-      treatment:(r[7]||'-').toString().substring(0,40),
-      tglTreatment:fmtDate(r[9]),
-      fuH3:r[12]||d3.toISOString().slice(0,10),
-      fuH21:r[14]||d21.toISOString().slice(0,10),
-      fuStatus:r[13]||'Belum',
-      fuStatus21:r[15]||'Belum',
-      fuLast:r[12]||'-',
+      treatment:(r[6]||'-').toString().substring(0,40),
+      tglTreatment:fmtDate(r[8]),
+      fuH3:r[11]||d3.toISOString().slice(0,10),
+      fuH21:r[13]||d21.toISOString().slice(0,10),
+      fuStatus:r[12]||'Belum',
+      fuStatus21:r[14]||'Belum',
+      fuLast:r[11]||'-',
       balik:'Belum',
-      loyalty:r[16]||'',
-      stamp:r[17]||'0'
+      loyalty:r[15]||'',
+      stamp:r[16]||'0'
     };
   }).filter(Boolean);
+  const fuPending = fuData.filter(r=>{
+    const h3Late = r.fuH3 && r.fuH3 < todayStr() && r.fuStatus.toLowerCase()!=='sudah';
+    const h21Late = r.fuH21 && r.fuH21 < todayStr() && r.fuStatus21.toLowerCase()!=='sudah';
+    return h3Late || h21Late;
+  });
   document.getElementById('fu-total').textContent=fuData.length;
   document.getElementById('fu-done').textContent=fuData.filter(r=>r.fuStatus==='Sudah').length;
+  // Update sidebar badge FU dengan jumlah yang perlu di-FU hari ini
+  const sbFU = document.getElementById('sb-fu');
+  if(sbFU) sbFU.textContent = fuPending.length;
   document.getElementById('fu-pending').textContent=fuData.filter(r=>r.fuStatus!=='Sudah').length;
   document.getElementById('fu-balik').textContent=fuData.filter(r=>r.balik==='Sudah').length;
   document.getElementById('sb-fu').textContent=fuData.filter(r=>r.fuStatus!=='Sudah').length;
@@ -2584,15 +2592,23 @@ function filterFU(){
   else if(f==='pending') data=fuData.filter(r=>r.fuStatus!=='Sudah');
   else if(f==='done') data=fuData.filter(r=>r.fuStatus==='Sudah');
   const tbody=document.getElementById('fu-tbody'); if(!tbody) return;
-  tbody.innerHTML=data.slice(0,100).map(r=>`<tr>
-    <td><strong>${r.nama}</strong></td><td style="font-size:10px">${r.hp}</td>
-    <td style="font-size:10px">${r.treatment}</td><td style="font-size:10px">${r.tglTreatment}</td>
-    <td style="font-size:10px">${r.fuH3}</td>
-    <td><span class="badge b-${r.fuStatus==='sudah'||r.fuStatus==='Sudah'?'green':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus||'Belum'}</span></td>
-    <td style="font-size:10px">${r.fuH21}</td>
-    <td><span class="badge b-${r.fuStatus21==='sudah'||r.fuStatus21==='Sudah'?'green':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus21||'Belum'}</span></td>
+  const todayDateStr = todayStr();
+  tbody.innerHTML=data.slice(0,100).map(r=>{
+    const h3Late = r.fuH3 && r.fuH3 < todayDateStr && r.fuStatus.toLowerCase()!=='sudah';
+    const h21Late = r.fuH21 && r.fuH21 < todayDateStr && r.fuStatus21.toLowerCase()!=='sudah';
+    const rowBg = (h3Late||h21Late) ? 'background:#FFF0F0' : '';
+    return `<tr style="${rowBg}">
+    <td><strong>${r.nama}</strong>${h3Late||h21Late?'<span style="color:#E74C3C;font-size:9px;margin-left:4px">⚠️ Terlambat</span>':''}</td>
+    <td style="font-size:10px">${r.hp}</td>
+    <td style="font-size:10px">${r.treatment}</td>
+    <td style="font-size:10px">${r.tglTreatment}</td>
+    <td style="font-size:10px;${h3Late?'color:#E74C3C;font-weight:700':''}">${r.fuH3}</td>
+    <td><span class="badge b-${r.fuStatus==='sudah'||r.fuStatus==='Sudah'?'green':h3Late?'red':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus||'Belum'}</span></td>
+    <td style="font-size:10px;${h21Late?'color:#E74C3C;font-weight:700':''}">${r.fuH21}</td>
+    <td><span class="badge b-${r.fuStatus21==='sudah'||r.fuStatus21==='Sudah'?'green':h21Late?'red':'gold'}" onclick="toggleFUStatus(this)" style="cursor:pointer">${r.fuStatus21||'Belum'}</span></td>
     <td><a href="https://wa.me/62${waNum(r.hp)}?text=${waText(r.nama,'h3')}" target="_blank" style="background:var(--green);color:white;padding:2px 7px;border-radius:5px;font-size:10px;text-decoration:none;font-weight:600">💬 WA</a></td>
-  </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada data</td></tr>';
+  </tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:20px">Tidak ada data</td></tr>';
 }
 
 async function syncLoyalty(){
@@ -2620,15 +2636,15 @@ function renderLoyaltyTable(){ filterLoyalty(); }
 function renderLoyaltyTableData(data){
   const tbody=document.getElementById('loyalty-tbody'); if(!tbody) return;
   tbody.innerHTML=data.slice(0,200).map(r=>{
-    const tier=(r[16]||'').toString().trim().toLowerCase();
-    const stamp=parseInt(r[17])||0;
+    const tier=(r[15]||'').toString().trim().toLowerCase();
+    const stamp=parseInt(r[16])||0;
     // Hitung kartu ke berapa: stamp > 10 berarti sudah pernah full
     // Kita simpan cardNum di data sendiri jika ada, atau hitung dari stamp history
     const cardNum=parseInt(r._cardNum||1);
     const kardLabel=cardNum>1?`<span style="font-size:9px;background:rgba(212,160,23,.2);padding:1px 5px;border-radius:5px;margin-left:3px">Kartu #${cardNum}</span>`:'';
     const stamps=Array.from({length:10},(_,i)=>`<div style="width:18px;height:18px;border-radius:50%;background:${i<stamp?(i===3||i===9?'#FFD700':'var(--gold)'):'var(--gray-l)'};font-size:8px;display:flex;align-items:center;justify-content:center;color:${i<stamp?'#1E1A0F':'var(--gray)'};border:${i===3||i===9?'2px solid #FFD700':'1px solid rgba(0,0,0,.1)'};font-weight:700">${i<stamp?(i===3||i===9?'🎁':'✓'):''}</div>`).join('');
-    const klaim4=r[18]&&String(r[18]).trim()&&String(r[18]).trim()!=='-';
-    const klaim10=r[20]&&String(r[20]).trim()&&String(r[20]).trim()!=='-';
+    const klaim4=r[17]&&String(r[17]).trim()&&String(r[17]).trim()!=='-';
+    const klaim10=r[18]&&String(r[18]).trim()&&String(r[18]).trim()!=='-';
     return `<tr>
       <td style="font-size:10px">${r[0]||'-'}</td>
       <td><strong>${r[1]}</strong>${kardLabel}</td>
@@ -2682,7 +2698,7 @@ async function updateTierV4(sel, memberId){
   try {
     const rowIdx=masterData.findIndex(r=>r[0]===memberId);
     if(rowIdx>=0){
-      await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:17,value:tier});
+      await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:16,value:tier});
       masterData[rowIdx][16]=tier; syncLoyalty(); toast(`✓ Tier → ${tier}`);
     }
   } catch(e){ toast('⚠️ Gagal update'); }
@@ -2776,13 +2792,13 @@ async function simpanUpdateKunjungan(){
   const fmtD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
   const fmtTgl=tglDate.toLocaleDateString('id-ID');
   const r=masterData[_updatingRowIdx];
-  const newVisit=parseInt(r[10]||0)+1;
-  r[9]=fmtTgl; r[10]=newVisit;
-  if(masalah) r[7]=masalah;
-  if(loyalty) r[16]=loyalty;
-  r[12]=fmtD(fuH3); r[13]='belum';
-  r[14]=fmtD(fuH21); r[15]='belum';
-  if(notes) r[24]=notes;
+  const newVisit=parseInt(r[9]||0)+1;
+  r[8]=fmtTgl; r[9]=newVisit;
+  if(masalah) r[6]=masalah;
+  if(loyalty) r[15]=loyalty;
+  r[11]=fmtD(fuH3); r[12]='belum';
+  r[13]=fmtD(fuH21); r[14]='belum';
+  if(notes) r[22]=notes;
   const sheetRow=_updatingRowIdx+1;
   try {
     const updates=[
@@ -2935,10 +2951,10 @@ async function saveAllLoyaltyToSheets(){
       const sheetRow = rowIdx + 1; // +1 karena Sheets 1-indexed
       // Update: col 17=LOYALTY(index 16), col 18=STAMP(index 17), col 19=REWARD4(index 18), col 21=REWARD10(index 20)
       const promises = [];
-      if(tier) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:tier})}));
-      if(stamp) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:stamp})}));
-      if(klaim4) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'})}));
-      if(klaim10) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:21,value:'sudah'})}));
+      if(tier) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:16,value:tier})}));
+      if(stamp) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:17,value:stamp})}));
+      if(klaim4) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:18,value:'sudah'})}));
+      if(klaim10) promises.push(fetch(SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:sheetRow,colIndex:19,value:'sudah'})}));
       await Promise.all(promises);
       success++;
     } catch(e){ fail++; }
@@ -3072,7 +3088,7 @@ async function saveMGMToSheets(){
     for(const[nama,count] of Object.entries(referalUpdate)){
       const rowIdx=masterData.findIndex(r=>String(r[1]).trim().toLowerCase()===nama.toLowerCase());
       if(rowIdx>=0){
-        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:21,value:count});
+        await postToSheets({action:'update_cell',sheet:'MASTER DATA PASIEN',rowIndex:rowIdx+1,colIndex:20,value:count});
         masterData[rowIdx][20]=count;
       }
     }
@@ -3117,15 +3133,15 @@ function renderMasterTable(){
     <td style="font-size:10px">${r[2]||'-'}</td>
     <td style="font-size:10px">${fmtDate(r[3])}</td>
     <td><span class="badge b-blue" style="font-size:9px">${r[5]&&String(r[5]).trim()&&r[5]!==''?r[5]:'-'}</span></td>
-    <td style="font-size:10px">${(r[7]||'-').toString().substring(0,25)}</td>
-    <td style="font-size:10px">${fmtDate(r[9])}</td>
-    <td style="font-size:10px">${r[10]||'0'} visit</td>
-    <td><span class="badge b-${lbadge(r[16])}">${r[16]||'-'}</span></td>
-    <td style="font-size:10px">${r[17]||'0'}/10</td>
-    <td style="font-size:9px">${fmtDate(r[12])||'-'} / ${fmtDate(r[14])||'-'}</td>
-    <td><span class="badge b-${r[22]==='ya'||r[22]==='Bergabung'?'green':'gray'}" style="font-size:9px">${r[22]||'-'}</span></td>
-    <td style="font-size:10px">${(r[24]||'-').toString().substring(0,30)}</td>
-    <td>${getStatusBadge(r[9])}</td>
+    <td style="font-size:10px">${(r[6]||'-').toString().substring(0,25)}</td>
+    <td style="font-size:10px">${fmtDate(r[8])}</td>
+    <td style="font-size:10px">${r[9]||'0'} visit</td>
+    <td><span class="badge b-${lbadge(r[15])}">${r[15]||'-'}</span></td>
+    <td style="font-size:10px">${r[16]||'0'}/10</td>
+    <td style="font-size:9px">${fmtDate(r[11])||'-'} / ${fmtDate(r[13])||'-'}</td>
+    <td><span class="badge b-${r[20]==='ya'||r[20]==='Bergabung'?'green':'gray'}" style="font-size:9px">${r[20]||'-'}</span></td>
+    <td style="font-size:10px">${(r[22]||'-').toString().substring(0,30)}</td>
+    <td>${getStatusBadge(r[8])}</td>
     <td><button onclick="bukaModalUpdateByIdx(${_idx})" style="background:#D4A017;color:white;border:none;padding:3px 8px;border-radius:5px;font-size:9px;cursor:pointer;font-weight:700;white-space:nowrap">+ Kunjungan</button></td>
   </tr>`).join('')||'<tr><td colspan="13" style="text-align:center;color:var(--gray)">Tidak ada data</td></tr>';
 }
